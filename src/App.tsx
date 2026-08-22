@@ -415,6 +415,15 @@ export const App: React.FC = () => {
             onDeleteItem={handleDeleteItem}
             onApplySubstitute={handleApplySubstitute}
             onClearList={handleClearList}
+            onQuickAddItem={(name, category, price) => {
+              handleAddCustomItem({
+                name,
+                category,
+                quantity: 1,
+                unit: 'item',
+                price,
+              });
+            }}
           />
         ) : (
           <SuggestionsView

@@ -7,6 +7,7 @@ export type Category =
   | 'Beverages'
   | 'Snacks'
   | 'Frozen'
+  | 'Electronics'
   | 'Household'
   | 'Personal Care'
   | 'Other';

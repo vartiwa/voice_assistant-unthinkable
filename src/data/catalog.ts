@@ -1,4 +1,4 @@
-import { CatalogProduct } from '../types';
+import { CatalogProduct, Category } from '../types';
 
 export const PRODUCT_CATALOG: CatalogProduct[] = [
   // Produce
@@ -18,7 +18,7 @@ export const PRODUCT_CATALOG: CatalogProduct[] = [
   },
   {
     id: 'prod-2',
-    name: 'Bananas',
+    name: 'Fresh Bananas',
     category: 'Produce',
     brand: 'Chiquita',
     price: 0.69,
@@ -226,6 +226,50 @@ export const PRODUCT_CATALOG: CatalogProduct[] = [
     onSale: true,
     originalPrice: 4.59,
     substitutes: ['Plain Bagels', 'English Muffins']
+  },
+
+  // Electronics & Gadgets
+  {
+    id: 'elec-1',
+    name: 'Wireless Bluetooth Earphones',
+    category: 'Electronics',
+    brand: 'Sony',
+    price: 29.99,
+    unit: 'pair',
+    imageIcon: '🎧',
+    onSale: true,
+    originalPrice: 39.99,
+    substitutes: ['True Wireless Earbuds', 'Wired 3.5mm Earphones']
+  },
+  {
+    id: 'elec-2',
+    name: 'In-Ear Bass Earphones with Mic',
+    category: 'Electronics',
+    brand: 'JBL',
+    price: 14.99,
+    unit: 'item',
+    imageIcon: '🎧',
+    substitutes: ['Wireless Bluetooth Earphones']
+  },
+  {
+    id: 'elec-3',
+    name: 'USB-C Fast Charging Cable (6ft)',
+    category: 'Electronics',
+    brand: 'Anker',
+    price: 9.99,
+    unit: 'item',
+    imageIcon: '🔌',
+    substitutes: ['Braided Lightning Cable']
+  },
+  {
+    id: 'elec-4',
+    name: 'AA Alkaline Batteries (8-Pack)',
+    category: 'Electronics',
+    brand: 'Duracell',
+    price: 7.99,
+    unit: 'pack',
+    imageIcon: '🔋',
+    substitutes: ['AAA Alkaline Batteries (8-Pack)', 'Rechargeable AA Batteries']
   },
 
   // Meat & Seafood
@@ -444,7 +488,25 @@ export const PRODUCT_CATALOG: CatalogProduct[] = [
   }
 ];
 
-export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
+export const CATEGORY_MAP: Record<string, Category> = {
+  // Electronics
+  earphone: 'Electronics',
+  earphones: 'Electronics',
+  headphone: 'Electronics',
+  headphones: 'Electronics',
+  earbud: 'Electronics',
+  earbuds: 'Electronics',
+  airpod: 'Electronics',
+  airpods: 'Electronics',
+  charger: 'Electronics',
+  cable: 'Electronics',
+  battery: 'Electronics',
+  batteries: 'Electronics',
+  mouse: 'Electronics',
+  keyboard: 'Electronics',
+  phone: 'Electronics',
+  laptop: 'Electronics',
+
   // Produce
   apple: 'Produce',
   apples: 'Produce',
@@ -477,6 +539,12 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   berries: 'Produce',
   fruit: 'Produce',
   vegetable: 'Produce',
+  grapes: 'Produce',
+  mango: 'Produce',
+  mangoes: 'Produce',
+  watermelon: 'Produce',
+  sebb: 'Produce',
+  seb: 'Produce',
 
   // Dairy & Eggs
   milk: 'Dairy & Eggs',
@@ -485,9 +553,10 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   cheese: 'Dairy & Eggs',
   butter: 'Dairy & Eggs',
   yogurt: 'Dairy & Eggs',
+  curd: 'Dairy & Eggs',
+  paneer: 'Dairy & Eggs',
+  doodh: 'Dairy & Eggs',
   cream: 'Dairy & Eggs',
-  almond_milk: 'Dairy & Eggs',
-  oat_milk: 'Dairy & Eggs',
   cheddar: 'Dairy & Eggs',
 
   // Bakery
@@ -503,6 +572,8 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   bun: 'Bakery',
   buns: 'Bakery',
   pita: 'Bakery',
+  roti: 'Bakery',
+  naan: 'Bakery',
 
   // Meat & Seafood
   chicken: 'Meat & Seafood',
@@ -515,10 +586,10 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   shrimp: 'Meat & Seafood',
   tuna: 'Meat & Seafood',
   tofu: 'Meat & Seafood',
+  meat: 'Meat & Seafood',
 
   // Pantry
   oil: 'Pantry',
-  'olive oil': 'Pantry',
   rice: 'Pantry',
   pasta: 'Pantry',
   sauce: 'Pantry',
@@ -528,7 +599,10 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   pepper: 'Pantry',
   cereal: 'Pantry',
   beans: 'Pantry',
-  peanut_butter: 'Pantry',
+  dal: 'Pantry',
+  lentils: 'Pantry',
+  spices: 'Pantry',
+  masala: 'Pantry',
 
   // Beverages
   water: 'Beverages',
@@ -536,23 +610,26 @@ export const CATEGORY_MAP: Record<string, CatalogProduct['category']> = {
   coffee: 'Beverages',
   tea: 'Beverages',
   soda: 'Beverages',
-  'sparkling water': 'Beverages',
+  chai: 'Beverages',
   coke: 'Beverages',
 
   // Snacks
   chips: 'Snacks',
   chocolate: 'Snacks',
   nuts: 'Snacks',
+  almonds: 'Snacks',
   cookies: 'Snacks',
+  biscuit: 'Snacks',
+  biscuits: 'Snacks',
   crackers: 'Snacks',
   popcorn: 'Snacks',
 
   // Household & Personal
-  'paper towels': 'Household',
-  'toilet paper': 'Household',
   soap: 'Household',
   detergent: 'Household',
   toothpaste: 'Personal Care',
+  toothbrush: 'Personal Care',
   shampoo: 'Personal Care',
-  conditioner: 'Personal Care'
+  conditioner: 'Personal Care',
+  lotion: 'Personal Care'
 };

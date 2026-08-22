@@ -97,6 +97,8 @@ const COMMON_UNITS = [
   'jars',
   'item',
   'items',
+  'pair',
+  'pairs',
   'tube',
   'tubes',
   'dozen',
@@ -116,39 +118,48 @@ const COMMON_UNITS = [
   'बोतल',
 ];
 
-// Helper to determine category from item name
+// Helper to determine category from item name with whole-word regex matching
 export const inferCategory = (itemName: string): Category => {
-  const lower = itemName.toLowerCase();
+  const lower = itemName.toLowerCase().trim();
+  if (!lower) return 'Other';
 
-  // Exact or substring match in category map
+  // 1. Whole-word boundary match in CATEGORY_MAP
   for (const [key, category] of Object.entries(CATEGORY_MAP)) {
-    if (lower.includes(key)) {
+    const regex = new RegExp(`(^|\\s|[^a-zA-Z0-9])${key}($|\\s|[^a-zA-Z0-9])`, 'i');
+    if (regex.test(lower)) {
       return category;
     }
   }
 
-  // Check catalog for known product names
-  const matchedCatalog = PRODUCT_CATALOG.find((p) =>
-    lower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(lower)
-  );
+  // 2. Check catalog for exact or substring product names
+  const matchedCatalog = PRODUCT_CATALOG.find((p) => {
+    const pName = p.name.toLowerCase();
+    return pName === lower || pName.includes(lower) || lower.includes(pName);
+  });
 
   if (matchedCatalog) {
     return matchedCatalog.category;
   }
 
+  // 3. Fallback keyword checks
+  if (/\b(earphones?|headphones?|earbuds?|airpods?|charger|cable|battery|batteries|mouse|keyboard|phone|laptop)\b/i.test(lower)) {
+    return 'Electronics';
+  }
+
   return 'Other';
 };
 
-// Helper to determine default price and unit from catalog
+// Helper to determine default price and unit without corrupting item name
 export const inferProductDefaults = (
   itemName: string
 ): { price: number; unit: string; brand?: string; isOrganic?: boolean; fullName?: string } => {
-  const lower = itemName.toLowerCase();
-  const matched = PRODUCT_CATALOG.find(
-    (p) =>
-      p.name.toLowerCase().includes(lower) ||
-      lower.includes(p.name.toLowerCase().split(' ')[0])
-  );
+  const lower = itemName.toLowerCase().trim();
+
+  // Check catalog for close product matches
+  const matched = PRODUCT_CATALOG.find((p) => {
+    const pLower = p.name.toLowerCase();
+    return pLower === lower || pLower.includes(lower);
+  });
 
   if (matched) {
     return {
@@ -157,6 +168,22 @@ export const inferProductDefaults = (
       brand: matched.brand,
       isOrganic: matched.isOrganic,
       fullName: matched.name,
+    };
+  }
+
+  // Reasonable defaults for electronics
+  if (/\b(earphones?|headphones?|earbuds?|airpods?)\b/i.test(lower)) {
+    return {
+      price: 19.99,
+      unit: 'pair',
+      brand: 'Sony',
+    };
+  }
+  if (/\b(charger|cable|usb)\b/i.test(lower)) {
+    return {
+      price: 9.99,
+      unit: 'item',
+      brand: 'Anker',
     };
   }
 
@@ -256,7 +283,6 @@ export class NLPEngine {
       // Check if price filtering was requested
       if (priceMatch) {
         const maxPrice = parseFloat(priceMatch[1]);
-        // Extract what product they are searching for (e.g. "toothpaste", "snacks", "apples")
         let cleanQuery = lower
           .replace(priceMatch[0], '')
           .replace(/^(find|search for|search|show me|show|look for|buscar|chercher|suchen|ढूँढो|खोजो)\s*/i, '')
@@ -314,27 +340,25 @@ export class NLPEngine {
         .replace(/^(the|a|an|some|el|la|los|las|le|la|les|die|der|das)\s*/i, '')
         .trim();
 
-      // Check if quantity was spoken with remove
       const { quantity, cleanedName } = this.extractQuantityAndUnit(targetName);
-
-      const category = inferCategory(cleanedName);
+      const finalName = cleanedName || 'Item';
+      const category = inferCategory(finalName);
 
       return {
         intent: 'REMOVE_ITEM',
         rawText: text,
         itemDetails: {
-          name: this.formatItemName(cleanedName),
+          name: this.formatItemName(finalName),
           quantity: quantity || 1,
           unit: 'item',
           category,
         },
-        feedbackMessage: `Removed ${this.formatItemName(cleanedName)} from your list.`,
+        feedbackMessage: `Removed ${this.formatItemName(finalName)} from your list.`,
         success: true,
       };
     }
 
     // 6. ADD ITEM COMMANDS (Default intent for varied natural phrases)
-    // Matches: "Add milk", "I need apples", "I want to buy bananas", "Add bananas to my list", "Add 2 bottles of water", "Buy 5 oranges"
     let addText = lower
       .replace(/^(i need to buy|i want to buy|i want|i need|please add|can you add|add|buy|get me|get|put|quiero comprar|necesito|añadir|agregar|comprar|j'ai besoin de|ajouter|acheter|ich brauche|hinzufügen|kaufen|चाहिए|जोड़ो|खरीदना है)\s*/i, '')
       .replace(/(to my list|to the list|to list|to cart|to my cart|in my cart|en mi lista|à ma liste|zu meiner liste|जोड़ो|में डालो)/i, '')
@@ -349,7 +373,8 @@ export class NLPEngine {
     const category = inferCategory(finalName);
     const defaults = inferProductDefaults(finalName);
 
-    const formattedName = defaults.fullName || this.formatItemName(finalName);
+    // Keep the user's item name formatted cleanly
+    const formattedName = this.formatItemName(finalName);
 
     return {
       intent: 'ADD_ITEM',
@@ -402,7 +427,7 @@ export class NLPEngine {
       }
     }
 
-    // 3. Check for units (e.g. "bottles", "packs", "kg", "gallons")
+    // 3. Check for units (e.g. "bottles", "packs", "kg", "gallons", "pair")
     const unitIndex = tokens.findIndex((t) => COMMON_UNITS.includes(t.toLowerCase()));
     if (unitIndex !== -1) {
       unit = tokens[unitIndex];

@@ -1,11 +1,13 @@
 import { LanguageOption } from '../types';
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'en', name: 'English', nativeName: 'English (US)', flag: '🇺🇸', speechCode: 'en-US' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', speechCode: 'es-ES' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷', speechCode: 'fr-FR' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', speechCode: 'de-DE' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', speechCode: 'hi-IN' },
+  { code: 'en-US', name: 'English (US)', nativeName: 'English (US)', flag: '🇺🇸', speechCode: 'en-US' },
+  { code: 'en-IN', name: 'English (India)', nativeName: 'English (India)', flag: '🇮🇳', speechCode: 'en-IN' },
+  { code: 'en-GB', name: 'English (UK)', nativeName: 'English (UK)', flag: '🇬🇧', speechCode: 'en-GB' },
+  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', speechCode: 'hi-IN' },
+  { code: 'es-ES', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', speechCode: 'es-ES' },
+  { code: 'fr-FR', name: 'French', nativeName: 'Français', flag: '🇫🇷', speechCode: 'fr-FR' },
+  { code: 'de-DE', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', speechCode: 'de-DE' },
 ];
 
 export interface SpeechRecognitionHandlers {
@@ -16,12 +18,10 @@ export interface SpeechRecognitionHandlers {
   onAudioLevel?: (level: number) => void;
 }
 
-// Check if Web Speech API is supported
 export const isSpeechRecognitionSupported = (): boolean => {
   return typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 };
 
-// Polyfill SpeechRecognition instance
 type SpeechRecognitionType = any;
 
 class SpeechService {
@@ -33,6 +33,7 @@ class SpeechService {
   private analyser: AnalyserNode | null = null;
   private animFrameId: number | null = null;
   private ttsMuted: boolean = false;
+  private isSpeakingTTS: boolean = false;
 
   constructor() {
     this.initRecognition();
@@ -46,7 +47,7 @@ class SpeechService {
 
     if (SpeechRecognitionAPI) {
       this.recognition = new SpeechRecognitionAPI();
-      this.recognition.continuous = true;
+      this.recognition.continuous = false; // Set to false to avoid picking up TTS echo and lingering noise
       this.recognition.interimResults = true;
       this.recognition.maxAlternatives = 1;
       this.recognition.lang = this.currentLanguage;
@@ -62,6 +63,9 @@ class SpeechService {
 
   public setMuted(muted: boolean) {
     this.ttsMuted = muted;
+    if (muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
   }
 
   public getIsMuted(): boolean {
@@ -69,12 +73,17 @@ class SpeechService {
   }
 
   public startListening(handlers: SpeechRecognitionHandlers) {
+    if (this.isSpeakingTTS) {
+      // Don't listen while TTS is speaking to prevent acoustic feedback loop
+      return;
+    }
+
     if (!this.recognition) {
       this.initRecognition();
     }
 
     if (!this.recognition) {
-      handlers.onError('Web Speech API is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      handlers.onError('Web Speech API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
       return;
     }
 
@@ -89,6 +98,9 @@ class SpeechService {
     };
 
     this.recognition.onresult = (event: any) => {
+      // If TTS is currently speaking, ignore audio to avoid feedback loop
+      if (this.isSpeakingTTS) return;
+
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -101,9 +113,9 @@ class SpeechService {
         }
       }
 
-      if (finalTranscript) {
+      if (finalTranscript.trim()) {
         handlers.onResult(finalTranscript.trim(), true);
-      } else if (interimTranscript) {
+      } else if (interimTranscript.trim()) {
         handlers.onResult(interimTranscript.trim(), false);
       }
     };
@@ -111,12 +123,14 @@ class SpeechService {
     this.recognition.onerror = (event: any) => {
       let msg = 'Speech recognition error occurred';
       if (event.error === 'not-allowed') {
-        msg = 'Microphone access denied. Please grant microphone permission in your browser.';
+        msg = 'Microphone access was denied. Please allow microphone permission in your browser URL bar.';
       } else if (event.error === 'no-speech') {
         msg = 'No speech detected. Please speak clearly into your mic.';
       } else if (event.error === 'network') {
         msg = 'Network connection issue with speech service.';
       }
+      this.isListening = false;
+      this.stopAudioVisualizer();
       handlers.onError(msg);
     };
 
@@ -130,7 +144,6 @@ class SpeechService {
       this.recognition.lang = this.currentLanguage;
       this.recognition.start();
     } catch (err: any) {
-      // If already started or crashed
       console.warn('SpeechRecognition start error:', err);
     }
   }
@@ -171,7 +184,7 @@ class SpeechService {
             sum += dataArray[i];
           }
           const avg = sum / dataArray.length;
-          const normalized = Math.min(100, Math.round((avg / 255) * 100 * 1.5));
+          const normalized = Math.min(100, Math.round((avg / 255) * 100 * 2));
           onAudioLevel(normalized);
           this.animFrameId = requestAnimationFrame(tick);
         };
@@ -179,7 +192,6 @@ class SpeechService {
         this.animFrameId = requestAnimationFrame(tick);
       }
     } catch (err) {
-      // AudioContext mic level optional fallback
       console.warn('AudioVisualizer mic access unavailable:', err);
     }
   }
@@ -199,7 +211,7 @@ class SpeechService {
     }
   }
 
-  // Text-To-Speech (TTS) Voice Feedback
+  // Text-To-Speech (TTS) Voice Feedback with acoustic loop prevention
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -207,6 +219,7 @@ class SpeechService {
         return;
       }
 
+      this.isSpeakingTTS = true;
       window.speechSynthesis.cancel(); // Cancel any ongoing speech
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -214,7 +227,7 @@ class SpeechService {
       utterance.rate = 1.05;
       utterance.pitch = 1.0;
 
-      // Select matching voice if available
+      // Match voice
       const voices = window.speechSynthesis.getVoices();
       const matchedVoice = voices.find(
         (v) => v.lang.startsWith(langCode.substring(0, 2)) || v.lang === langCode
@@ -223,8 +236,14 @@ class SpeechService {
         utterance.voice = matchedVoice;
       }
 
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      utterance.onend = () => {
+        this.isSpeakingTTS = false;
+        resolve();
+      };
+      utterance.onerror = () => {
+        this.isSpeakingTTS = false;
+        resolve();
+      };
 
       window.speechSynthesis.speak(utterance);
     });
