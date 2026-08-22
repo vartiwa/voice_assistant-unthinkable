@@ -479,8 +479,8 @@ export const App: React.FC = () => {
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Main Edge-to-Edge Desktop Canvas */}
-      <main className="w-full px-4 sm:px-6 lg:px-10 py-5 flex-1 space-y-6">
+      {/* Main Edge-to-Edge Desktop Canvas with Structured Boundary */}
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
         
         {/* 1. TRUE CENTER HERO SECTION: The 3D Orb as Primary Hero */}
         <CenterHeroStage
