@@ -1,6 +1,6 @@
 import React from 'react';
 import { SmartSuggestion } from '../types';
-import { Plus, Check, RotateCcw, Leaf } from 'lucide-react';
+import { Plus, Check, RotateCcw, Leaf, TrendingUp } from 'lucide-react';
 
 interface CompactSuggestionsWidgetProps {
   suggestions: SmartSuggestion[];
@@ -13,27 +13,35 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
   onAddSuggestion,
   addedSuggestionIds,
 }) => {
-  const habitualSuggestions = suggestions.filter((s) => s.type === 'history');
-  const seasonalSuggestions = suggestions.filter((s) => s.type === 'seasonal' || s.type === 'sale');
+  const habitualSuggestions = suggestions.filter((s) => s.type === 'history').slice(0, 2);
+  const seasonalSuggestions = suggestions.filter((s) => s.type === 'seasonal' || s.type === 'sale').slice(0, 2);
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-4">
+    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-3.5 h-full flex flex-col justify-between">
       
+      {/* Top Header matching Sketch */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+        <div className="flex items-center gap-1.5">
+          <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
+            RECOMMENDED
+          </h4>
+        </div>
+        <span className="text-[10px] font-mono text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
+          Smart Radar
+        </span>
+      </div>
+
       {/* 1. Habitual Routine Reorders Section */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
-          <div className="flex items-center gap-1.5">
-            <RotateCcw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Habitual Routine Reorders
-            </h4>
-          </div>
-          <span className="text-[10px] font-mono text-slate-400">
-            Automated Reorder Radar
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <span className="flex items-center gap-1">
+            <RotateCcw className="w-3 h-3 text-blue-500" />
+            <span>Routine Reorders</span>
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="space-y-1.5">
           {habitualSuggestions.map((sug) => {
             const isAdded = addedSuggestionIds.has(sug.id);
 
@@ -72,20 +80,15 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
       </div>
 
       {/* 2. Seasonal Harvest & Market Specials */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
-          <div className="flex items-center gap-1.5">
-            <Leaf className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Seasonal Harvest & Market Specials
-            </h4>
-          </div>
-          <span className="text-[10px] font-mono text-slate-400">
-            Peak Harvest
+      <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <span className="flex items-center gap-1">
+            <Leaf className="w-3 h-3 text-emerald-500" />
+            <span>Seasonal Harvest</span>
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="space-y-1.5">
           {seasonalSuggestions.map((sug) => {
             const isAdded = addedSuggestionIds.has(sug.id);
 

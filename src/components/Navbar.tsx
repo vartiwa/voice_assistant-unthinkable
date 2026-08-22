@@ -39,17 +39,17 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-30 bg-[#FBFBFA]/95 dark:bg-[#0C0D0E]/95 backdrop-blur-md border-b border-stone-200/90 dark:border-stone-800 transition-colors">
       <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
         
-        {/* Brand & Engineering Tag */}
+        {/* Brand & Engineering Tag matching sketch */}
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-stone-900 dark:bg-stone-100 flex items-center justify-center shadow-xs">
-            <span className="text-white dark:text-stone-900 font-black text-xs tracking-tighter">VC</span>
+          <div className="w-8 h-8 rounded-xl bg-zinc-950 dark:bg-white flex items-center justify-center shadow-xs">
+            <span className="text-white dark:text-zinc-950 font-black text-xs tracking-tighter">VC</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <h1 className="font-extrabold text-sm tracking-tight text-stone-900 dark:text-stone-100">
-              VoiceCart
+            <h1 className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
+              V-Cart
             </h1>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-stone-200/80 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
-              v1.2
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+              AI
             </span>
           </div>
         </div>

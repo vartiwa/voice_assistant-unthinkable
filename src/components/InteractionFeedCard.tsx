@@ -19,8 +19,8 @@ export const InteractionFeedCard: React.FC<InteractionFeedCardProps> = ({
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
         <div className="flex items-center gap-2">
           <Terminal className="w-3.5 h-3.5 text-slate-500" />
-          <h4 className="font-bold text-xs text-slate-900 dark:text-white tracking-tight uppercase">
-            Dialogue & Activity Stream
+          <h4 className="font-extrabold text-xs text-slate-900 dark:text-white tracking-wider uppercase">
+            CHAT · Activity Stream
           </h4>
         </div>
         <span className="text-[11px] font-mono text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
