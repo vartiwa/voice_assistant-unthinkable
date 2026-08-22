@@ -246,32 +246,43 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
       {/* 3. Categorized Items */}
       {items.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 text-center border border-slate-200/90 dark:border-zinc-800 shadow-xs">
-          <div className="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 mb-2">
+        <div className="bg-white dark:bg-stone-900 rounded-2xl p-8 text-center border border-stone-200/90 dark:border-stone-800 shadow-xs">
+          <div className="w-9 h-9 mx-auto rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-500 mb-2">
             <Package className="w-4 h-4" />
           </div>
-          <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+          <h4 className="text-xs font-bold text-stone-900 dark:text-white uppercase tracking-wider">
             Shopping Cart Empty
           </h4>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-stone-400 mt-1">
             Speak into your microphone: "Hey Assistant, add milk and earphones"
           </p>
         </div>
       ) : (
         Object.entries(groupedItems).map(([category, categoryItems]) => {
+          const catStyle = {
+            'Produce': { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', border: 'border-l-[3px] border-l-emerald-500' },
+            'Dairy & Eggs': { dot: 'bg-sky-500', badge: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800', border: 'border-l-[3px] border-l-sky-500' },
+            'Bakery': { dot: 'bg-amber-500', badge: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800', border: 'border-l-[3px] border-l-amber-500' },
+            'Electronics': { dot: 'bg-violet-500', badge: 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border-violet-200 dark:border-violet-800', border: 'border-l-[3px] border-l-violet-500' },
+            'Meat & Seafood': { dot: 'bg-rose-500', badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800', border: 'border-l-[3px] border-l-rose-500' },
+            'Pantry': { dot: 'bg-orange-500', badge: 'bg-orange-50 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200 dark:border-orange-800', border: 'border-l-[3px] border-l-orange-500' },
+            'Beverages': { dot: 'bg-cyan-500', badge: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800', border: 'border-l-[3px] border-l-cyan-500' },
+            'Personal Care': { dot: 'bg-fuchsia-500', badge: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950/60 dark:text-fuchsia-300 border-fuchsia-200 dark:border-fuchsia-800', border: 'border-l-[3px] border-l-fuchsia-500' },
+          }[category] || { dot: 'bg-stone-500', badge: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300 border-stone-200 dark:border-stone-700', border: 'border-l-[3px] border-l-stone-500' };
+
           return (
             <div
               key={category}
-              className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-2.5"
+              className={`bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/90 dark:border-stone-800 shadow-xs space-y-2.5 ${catStyle.border}`}
             >
               {/* Department Heading */}
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between pb-2 border-b border-stone-100 dark:border-stone-800">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-slate-400 dark:bg-zinc-600" />
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <span className={`w-2 h-2 rounded-full ${catStyle.dot}`} />
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-stone-800 dark:text-stone-200">
                     {category}
                   </h4>
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] font-mono text-stone-400 font-semibold">
                     ({categoryItems.length})
                   </span>
                 </div>

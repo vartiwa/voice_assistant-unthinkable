@@ -98,6 +98,24 @@ export const App: React.FC = () => {
   } | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
   const [isMuted, setIsMuted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('voice_cart_dark_mode');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('voice_cart_dark_mode', String(isDarkMode));
+    } catch (e) {}
+  }, [isDarkMode]);
 
   // 5. Views & Modals State
   const [activeRightTab, setActiveRightTab] = useState<'cart' | 'suggestions'>('cart');
@@ -486,6 +504,8 @@ export const App: React.FC = () => {
         }}
         isHandsFree={isHandsFree}
         onToggleHandsFree={handleToggleHandsFree}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
       />
 
       {/* Main Desktop Workspace Canvas with Framed Boundary */}
