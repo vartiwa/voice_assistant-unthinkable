@@ -77,10 +77,11 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
   };
 
   const realCommandExamples = [
+    { label: 'Pantry & Dairy', cmd: 'Add 1 kg Atta and 2 packets of milk' },
     { label: 'Fresh Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
-    { label: 'Dairy', cmd: 'Add 2 Gallons of Whole Milk' },
+    { label: 'Hindi / Hinglish', cmd: '2 packet paneer aur doodh add karo' },
+    { label: 'Tamil / Tanglish', cmd: '1 kg thakkali and arisi venum' },
     { label: 'Electronics', cmd: 'Add Wireless Bluetooth Earphones' },
-    { label: 'Price Filter', cmd: 'Find Colgate Toothpaste under $5' },
   ];
 
   // Top 2-3 prominent suggestions (Habitual + Seasonal) to flank the orb on the right

@@ -1,7 +1,7 @@
 import { Category, ParsedVoiceCommand } from '../types';
 import { CATEGORY_MAP, PRODUCT_CATALOG } from '../data/catalog';
 
-// Number words map across supported languages
+// Number words map across supported languages (including Indian English, Hindi & Tamil)
 const NUMBER_WORDS: Record<string, number> = {
   // English
   a: 1,
@@ -18,6 +18,78 @@ const NUMBER_WORDS: Record<string, number> = {
   ten: 10,
   dozen: 12,
   half: 0.5,
+  quarter: 0.25,
+
+  // Hindi & Hinglish
+  'एक': 1,
+  'दो': 2,
+  'तीन': 3,
+  'चार': 4,
+  'पाँच': 5,
+  'पांच': 5,
+  'छह': 6,
+  'सात': 7,
+  'आठ': 8,
+  'नौ': 9,
+  'दस': 10,
+  'आधा': 0.5,
+  'पाव': 0.25,
+  'डेढ़': 1.5,
+  'ढाई': 2.5,
+  ek: 1,
+  do: 2,
+  teen: 3,
+  chaar: 4,
+  char: 4,
+  paanch: 5,
+  panch: 5,
+  chhah: 6,
+  che: 6,
+  saat: 7,
+  aath: 8,
+  ath: 8,
+  nau: 9,
+  das: 10,
+  aadha: 0.5,
+  adha: 0.5,
+  dedh: 1.5,
+  dhaai: 2.5,
+
+  // Tamil & Tanglish
+  'ஒன்று': 1,
+  'ஒன்னு': 1,
+  'இரண்டு': 2,
+  'ரெண்டு': 2,
+  'மூன்று': 3,
+  'மூணு': 3,
+  'நான்கு': 4,
+  'நாலு': 4,
+  'ஐந்து': 5,
+  'அஞ்சு': 5,
+  'ஆறு': 6,
+  'ஏழு': 7,
+  'எட்டு': 8,
+  'ஒன்பது': 9,
+  'பத்து': 10,
+  'அரை': 0.5,
+  'கால்': 0.25,
+  onnu: 1,
+  ondru: 1,
+  rendu: 2,
+  irandu: 2,
+  moonu: 3,
+  moondru: 3,
+  naalu: 4,
+  naangu: 4,
+  anju: 5,
+  aindhu: 5,
+  aaru: 6,
+  ezhu: 7,
+  ettu: 8,
+  ombodhu: 9,
+  pathu: 10,
+  arai: 0.5,
+  kaal: 0.25,
 
   // Spanish
   un: 1,
@@ -58,19 +130,6 @@ const NUMBER_WORDS: Record<string, number> = {
   acht: 8,
   neun: 9,
   zehn: 10,
-
-  // Hindi
-  'एक': 1,
-  'दो': 2,
-  'तीन': 3,
-  'चार': 4,
-  'पाँच': 5,
-  'पांच': 5,
-  'छह': 6,
-  'सात': 7,
-  'आठ': 8,
-  'नौ': 9,
-  'दस': 10,
 };
 
 const COMMON_UNITS = [
@@ -78,6 +137,10 @@ const COMMON_UNITS = [
   'bottles',
   'pack',
   'packs',
+  'packet',
+  'packets',
+  'pkt',
+  'pkts',
   'bag',
   'bags',
   'loaf',
@@ -88,9 +151,26 @@ const COMMON_UNITS = [
   'gallons',
   'box',
   'boxes',
+  'dabba',
   'lb',
   'lbs',
   'kg',
+  'kgs',
+  'kilo',
+  'kilos',
+  'kilogram',
+  'kilograms',
+  'gram',
+  'grams',
+  'gm',
+  'gms',
+  'g',
+  'litre',
+  'litres',
+  'liter',
+  'liters',
+  'ltr',
+  'ltrs',
   'can',
   'cans',
   'jar',
@@ -102,7 +182,22 @@ const COMMON_UNITS = [
   'tube',
   'tubes',
   'dozen',
-  // Multilingual units
+  'darjan',
+  'bunch',
+  'bunches',
+  'kattu',
+  // Multilingual Indian units
+  'किलो',
+  'ग्राम',
+  'लीटर',
+  'पैकेट',
+  'डब्बा',
+  'கிலோ',
+  'கிராம்',
+  'லிட்டர்',
+  'பாக்கெட்',
+  'கட்டு',
+  // European units
   'botella',
   'botellas',
   'bolsa',
@@ -114,11 +209,9 @@ const COMMON_UNITS = [
   'bouteilles',
   'flasche',
   'flaschen',
-  'पैकेट',
-  'बोतल',
 ];
 
-// Helper to determine category from item name with whole-word regex matching
+// Helper to infer category with whole-word regex matching
 export const inferCategory = (itemName: string): Category => {
   const lower = itemName.toLowerCase().trim();
   if (!lower) return 'Other';
@@ -142,7 +235,7 @@ export const inferCategory = (itemName: string): Category => {
   }
 
   // 3. Fallback keyword checks
-  if (/\b(earphones?|headphones?|earbuds?|airpods?|charger|cable|battery|batteries|mouse|keyboard|phone|laptop)\b/i.test(lower)) {
+  if (/\b(earphones?|headphones?|earbuds?|airpods?|charger|cable|battery|batteries|mouse|keyboard|phone|laptop|headset)\b/i.test(lower)) {
     return 'Electronics';
   }
 
@@ -158,7 +251,7 @@ export const inferProductDefaults = (
   // Check catalog for close product matches
   const matched = PRODUCT_CATALOG.find((p) => {
     const pLower = p.name.toLowerCase();
-    return pLower === lower || pLower.includes(lower);
+    return pLower === lower || pLower.includes(lower) || lower.includes(pLower);
   });
 
   if (matched) {
@@ -171,50 +264,119 @@ export const inferProductDefaults = (
     };
   }
 
-  // Reasonable defaults for electronics
-  if (/\b(earphones?|headphones?|earbuds?|airpods?)\b/i.test(lower)) {
-    return {
-      price: 19.99,
-      unit: 'pair',
-      brand: 'Sony',
-    };
+  // Smart defaults based on category
+  const cat = inferCategory(itemName);
+  switch (cat) {
+    case 'Produce':
+      return { price: 2.99, unit: 'lb' };
+    case 'Dairy & Eggs':
+      return { price: 3.49, unit: 'item' };
+    case 'Bakery':
+      return { price: 3.29, unit: 'pack' };
+    case 'Electronics':
+      return { price: 24.99, unit: 'pair' };
+    case 'Meat & Seafood':
+      return { price: 8.99, unit: 'lb' };
+    case 'Beverages':
+      return { price: 2.49, unit: 'bottle' };
+    case 'Snacks':
+      return { price: 3.99, unit: 'pack' };
+    case 'Pantry':
+      return { price: 4.29, unit: 'pack' };
+    case 'Household':
+      return { price: 5.99, unit: 'item' };
+    case 'Personal Care':
+      return { price: 4.49, unit: 'tube' };
+    default:
+      return { price: 3.99, unit: 'item' };
   }
-  if (/\b(charger|cable|usb)\b/i.test(lower)) {
-    return {
-      price: 9.99,
-      unit: 'item',
-      brand: 'Anker',
-    };
-  }
-
-  return {
-    price: 3.49,
-    unit: 'item',
-  };
 };
 
 export class NLPEngine {
-  /**
-   * Main entry point: parses raw speech transcript into structured intent and entities
-   */
-  public parseCommand(rawTranscript: string, _lang: string = 'en'): ParsedVoiceCommand {
-    const text = rawTranscript.trim();
+  // Extract quantity and unit with support for Indian, Tamil, and English accents
+  public extractQuantityAndUnit(
+    rawText: string
+  ): { quantity: number; unit: string; cleanedName: string } {
+    let text = rawText.trim();
+    let quantity = 1;
+    let unit = 'item';
 
+    // 1. Check for numeric digits or decimals (e.g. "3", "2.5", "0.5", "1/2")
+    const numericMatch = text.match(/^(?:add\s+|buy\s+|need\s+|get\s+|chahiye\s+|venum\s+)?(\d+(?:\.\d+)?|\d+\/\d+)\s*(.*)/i);
+    if (numericMatch) {
+      const numStr = numericMatch[1];
+      if (numStr.includes('/')) {
+        const [nom, denom] = numStr.split('/');
+        quantity = parseFloat(nom) / parseFloat(denom);
+      } else {
+        quantity = parseFloat(numStr);
+      }
+      text = numericMatch[2].trim();
+    } else {
+      // 2. Check for number words in English, Hindi, Tamil
+      const tokens = text.split(/\s+/);
+      const firstWord = tokens[0]?.toLowerCase();
+      const secondWord = tokens[1]?.toLowerCase();
+
+      if (tokens.length > 1 && NUMBER_WORDS[firstWord] !== undefined) {
+        quantity = NUMBER_WORDS[firstWord];
+        text = tokens.slice(1).join(' ');
+      } else if (
+        tokens.length > 2 &&
+        (firstWord === 'add' || firstWord === 'buy' || firstWord === 'get' || firstWord === 'need' || firstWord === 'ek' || firstWord === 'onnu') &&
+        NUMBER_WORDS[secondWord] !== undefined
+      ) {
+        quantity = NUMBER_WORDS[secondWord];
+        text = tokens.slice(2).join(' ');
+      }
+    }
+
+    // 3. Check for unit
+    const unitTokens = text.split(/\s+/);
+    const potentialUnit = unitTokens[0]?.toLowerCase();
+    const cleanUnit = potentialUnit?.replace(/s$/, ''); // normalize plural
+
+    if (COMMON_UNITS.includes(potentialUnit) || COMMON_UNITS.includes(cleanUnit)) {
+      unit = potentialUnit;
+      // Strip "of" if present (e.g. "gallons of milk" -> "milk")
+      const remaining = unitTokens.slice(1);
+      if (remaining[0]?.toLowerCase() === 'of' || remaining[0]?.toLowerCase() === 'ka' || remaining[0]?.toLowerCase() === 'kooda') {
+        text = remaining.slice(1).join(' ');
+      } else {
+        text = remaining.join(' ');
+      }
+    }
+
+    // 4. Strip Indian / Hinglish / Tanglish filler suffixes & prefixes
+    text = text
+      .replace(/\b(chahiye|lao|daalo|jodo|de do|add karo|kharido)\b/gi, '')
+      .replace(/\b(venum|podu|podunga|vaanganum|edunga|add pannu|add pannunga)\b/gi, '')
+      .replace(/\b(please|please add|can you add|i want to buy|i want|give me)\b/gi, '')
+      .trim();
+
+    return {
+      quantity: Math.max(quantity, 0.25),
+      unit,
+      cleanedName: text.trim(),
+    };
+  }
+
+  // Main NLP command parser
+  public parseCommand(rawText: string, _language: string = 'en-IN'): ParsedVoiceCommand {
+    const text = rawText.trim();
     if (!text) {
       return {
         intent: 'UNKNOWN',
-        rawText: text,
-        feedbackMessage: "I didn't catch that. Try saying 'Add milk' or 'Hey Assistant, find apples'.",
+        rawText: '',
+        feedbackMessage: "I didn't catch that. Please speak your command or say 'Help'.",
         success: false,
       };
     }
 
-    // Wake Word Detection & Stripping (supports "Hey Assistant", "VoiceCart", "Hey Google", "Assistant")
+    // Wake Word Detection (supports "Hey Assistant", "VoiceCart", "Namaste Assistant", "Vanakkam Assistant", "Assistant")
     const wakeWordMatches = [
-      /^hey\s+(?:assistant|cart|google|voice\s*cart)[,\s]*/i,
-      /^ok\s+(?:assistant|google|cart)[,\s]*/i,
-      /^(?:voice\s*cart|assistant)[,\s]*/i,
-      /^hello\s+(?:assistant|cart|google)[,\s]*/i,
+      /^(?:hey|ok|hello|namaste|vanakkam)\s+(?:assistant|cart|google|voice\s*cart)[,\s]*/i,
+      /^(?:voice\s*cart|assistant|shopping assistant)[,\s]*/i,
     ];
 
     let cleanedText = text;
@@ -228,26 +390,26 @@ export class NLPEngine {
       }
     }
 
-    // If user ONLY said the wake word ("Hey Assistant", "VoiceCart", etc.)
+    // If user ONLY said the wake word
     if (hadWakeWord && !cleanedText) {
       return {
         intent: 'WAKE_GREETING',
         rawText: text,
-        feedbackMessage: "Yes, I'm listening! What would you like to add to your list?",
+        feedbackMessage: "Yes, I'm listening! Tell me what to add to your list.",
         success: true,
       };
     }
 
     const lower = (cleanedText || text).toLowerCase().trim();
 
-    // 1. HELP COMMANDS
+    // 1. HELP COMMANDS (English, Hindi, Tamil)
     if (
       lower.includes('help') ||
       lower.includes('what can i say') ||
-      lower.includes('ayuda') ||
-      lower.includes('aide') ||
-      lower.includes('hilfe') ||
-      lower.includes('मदद')
+      lower.includes('kaise use kare') ||
+      lower.includes('eppadi use panradhu') ||
+      lower.includes('मदद') ||
+      lower.includes('உதவி')
     ) {
       return {
         intent: 'HELP',
@@ -257,22 +419,23 @@ export class NLPEngine {
       };
     }
 
-    // 2. SUGGESTIONS & SEASONAL COMMANDS
+    // 2. SUGGESTIONS & REORDERS (English, Hindi, Tamil)
     if (
       lower.includes('suggest') ||
       lower.includes('recommend') ||
       lower.includes('running low') ||
       lower.includes('in season') ||
       lower.includes('on sale') ||
-      lower.includes('sugerencias') ||
-      lower.includes('suggestions') ||
-      lower.includes('empfehlungen') ||
-      lower.includes('सुझाव')
+      lower.includes('routine') ||
+      lower.includes('offers') ||
+      lower.includes('सुझाव') ||
+      lower.includes('பரிந்துரை') ||
+      lower.includes('enna iruku')
     ) {
       return {
         intent: 'SHOW_SUGGESTIONS',
         rawText: text,
-        feedbackMessage: 'Opening smart suggestions based on your routine and seasonal specials.',
+        feedbackMessage: 'Showing smart suggestions for routine reorders, in-season produce, and weekly deals.',
         success: true,
       };
     }
@@ -281,11 +444,10 @@ export class NLPEngine {
     if (
       (lower.includes('clear') && (lower.includes('list') || lower.includes('all') || lower.includes('cart'))) ||
       lower.includes('delete all') ||
-      lower.includes('borrar todo') ||
-      lower.includes('vaciar lista') ||
-      lower.includes('tout supprimer') ||
-      lower.includes('alles löschen') ||
-      lower.includes('सब हटाओ')
+      lower.includes('sab hatao') ||
+      lower.includes('ellathayum delete pannu') ||
+      lower.includes('सब हटाओ') ||
+      lower.includes('அனைத்தும் நீக்கு')
     ) {
       return {
         intent: 'CLEAR_LIST',
@@ -295,28 +457,27 @@ export class NLPEngine {
       };
     }
 
-    // 4. PRICE FILTER COMMANDS (e.g. "Find toothpaste under $5", "Show items under 4 dollars", "bajo 5 dolares")
+    // 4. PRICE FILTER COMMANDS (Handles ₹, Rupees, Rs, INR, $, Dollars)
     const priceMatch = lower.match(
-      /(?:under|below|less than|max|cheaper than|under \$|bajo|menos de|sous|unter|से कम)\s*\$?(\d+(?:\.\d+)?)\s*(?:dollars?|bucks?|\$|euros?|रुपये)?/i
+      /(?:under|below|less than|max|cheaper than|under ₹|under \$|se kam|kulla|kamti)\s*(?:₹|\$|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:dollars?|bucks?|\$|rupees?|rs|inr|₹)?/i
     );
 
     if (
       priceMatch ||
       lower.startsWith('find') ||
       lower.startsWith('search') ||
-      lower.startsWith('buscar') ||
-      lower.startsWith('chercher') ||
-      lower.startsWith('suchen') ||
+      lower.startsWith('dhoondo') ||
+      lower.startsWith('thedu') ||
+      lower.startsWith('kaatu') ||
       lower.startsWith('ढूँढो') ||
-      lower.startsWith('खोजो')
+      lower.startsWith('தேடு')
     ) {
-      // Check if price filtering was requested
       if (priceMatch) {
         const maxPrice = parseFloat(priceMatch[1]);
         let cleanQuery = lower
           .replace(priceMatch[0], '')
-          .replace(/^(find|search for|search|show me|show|look for|buscar|chercher|suchen|ढूँढो|खोजो)\s*/i, '')
-          .replace(/(items?|products?|artículos|produits|produkte)/i, '')
+          .replace(/^(find|search for|search|show me|show|look for|dhoondo|thedu|kaatu|ढूँढो|தேடு)\s*/i, '')
+          .replace(/(items?|products?|things?)/i, '')
           .trim();
 
         return {
@@ -329,9 +490,9 @@ export class NLPEngine {
         };
       }
 
-      // Pure item search (e.g. "Find me organic apples")
+      // Pure item search
       let cleanQuery = lower
-        .replace(/^(find me|find|search for|search|look for|buscar|chercher|suchen|ढूँढो|खोजो)\s*/i, '')
+        .replace(/^(find me|find|search for|search|look for|dhoondo|thedu|kaatu|ढूँढो|தேடு)\s*/i, '')
         .trim();
 
       if (cleanQuery) {
@@ -345,7 +506,7 @@ export class NLPEngine {
       }
     }
 
-    // 5. REMOVE ITEM COMMANDS (e.g. "Remove milk from my list", "Delete bananas", "Take off 2 apples", "Eliminar pan")
+    // 5. REMOVE ITEM COMMANDS
     const isRemove =
       lower.startsWith('remove') ||
       lower.startsWith('delete') ||
@@ -353,21 +514,18 @@ export class NLPEngine {
       lower.startsWith('take off') ||
       lower.includes('from my list') ||
       lower.includes('from the list') ||
-      lower.startsWith('eliminar') ||
-      lower.startsWith('quitar') ||
-      lower.startsWith('borrar') ||
-      lower.startsWith('supprimer') ||
-      lower.startsWith('enlever') ||
-      lower.startsWith('entfernen') ||
-      lower.startsWith('löschen') ||
+      lower.includes('hatao') ||
+      lower.includes('nikalo') ||
+      lower.includes('delete pannu') ||
+      lower.includes('theva illa') ||
       lower.includes('हटाओ') ||
-      lower.includes('निकालो');
+      lower.includes('நீக்கு');
 
     if (isRemove) {
       let targetName = lower
-        .replace(/^(remove|delete|drop|take off|quitar|eliminar|borrar|supprimer|enlever|entfernen|löschen)\s*/i, '')
-        .replace(/(from my list|from the list|from list|from cart|de mi lista|de la liste|aus der liste|हटाओ|निकालो)/i, '')
-        .replace(/^(the|a|an|some|el|la|los|las|le|la|les|die|der|das)\s*/i, '')
+        .replace(/^(remove|delete|drop|take off)\s*/i, '')
+        .replace(/(from my list|from the list|from list|from cart|hatao|nikalo|delete pannu|theva illa|हटाओ|நீக்கு)/i, '')
+        .replace(/^(the|a|an|some)\s*/i, '')
         .trim();
 
       const { quantity, cleanedName } = this.extractQuantityAndUnit(targetName);
@@ -378,126 +536,52 @@ export class NLPEngine {
         intent: 'REMOVE_ITEM',
         rawText: text,
         itemDetails: {
-          name: this.formatItemName(finalName),
-          quantity: quantity || 1,
-          unit: 'item',
+          name: finalName,
           category,
+          quantity,
+          unit: 'item',
         },
-        feedbackMessage: `Removed ${this.formatItemName(finalName)} from your list.`,
+        feedbackMessage: `Removed ${finalName} from your shopping list.`,
         success: true,
       };
     }
 
-    // 6. ADD ITEM COMMANDS (Default intent for varied natural phrases)
-    let addText = lower
-      .replace(/^(i need to buy|i want to buy|i want|i need|please add|can you add|add|buy|get me|get|put|quiero comprar|necesito|añadir|agregar|comprar|j'ai besoin de|ajouter|acheter|ich brauche|hinzufügen|kaufen|चाहिए|जोड़ो|खरीदना है)\s*/i, '')
-      .replace(/(to my list|to the list|to list|to cart|to my cart|in my cart|en mi lista|à ma liste|zu meiner liste|जोड़ो|में डालो)/i, '')
+    // 6. ADD ITEM COMMANDS (Default natural speech intent with Indian phonetics & accents)
+    let itemInput = lower
+      .replace(/^(?:i want to add|please add|can you add|add|buy|get|need|put|include|i want|i need|chahiye|daalo|jodo|lao|venum|podu|podunga)\s+/i, '')
+      .replace(/(?:to my list|to the list|to my cart|to the cart|to list|in list|in cart|add karo|add pannu|add pannunga|kharido|vaanganum)$/i, '')
+      .replace(/^(?:the|some|a|an)\s+/i, '')
       .trim();
 
-    if (!addText) {
-      addText = lower; // fallback
+    if (!itemInput) {
+      itemInput = lower;
     }
 
-    const { quantity, unit, cleanedName, isOrganic } = this.extractQuantityAndUnit(addText);
-    const finalName = cleanedName || 'Item';
-    const category = inferCategory(finalName);
-    const defaults = inferProductDefaults(finalName);
+    const { quantity, unit, cleanedName } = this.extractQuantityAndUnit(itemInput);
+    const finalCleanName = cleanedName || itemInput;
 
-    // Keep the user's item name formatted cleanly
-    const formattedName = this.formatItemName(finalName);
+    const category = inferCategory(finalCleanName);
+    const defaults = inferProductDefaults(finalCleanName);
+
+    // Use full formal product name if catalog matched
+    const displayName = defaults.fullName || finalCleanName.charAt(0).toUpperCase() + finalCleanName.slice(1);
+    const finalUnit = unit !== 'item' ? unit : defaults.unit;
 
     return {
       intent: 'ADD_ITEM',
       rawText: text,
       itemDetails: {
-        name: formattedName,
-        quantity: quantity || 1,
-        unit: unit || defaults.unit || 'item',
+        name: displayName,
         category,
+        quantity,
+        unit: finalUnit,
         brand: defaults.brand,
-        isOrganic: isOrganic || defaults.isOrganic || false,
+        isOrganic: defaults.isOrganic || /organic/i.test(rawText),
         maxPrice: defaults.price,
       },
-      feedbackMessage: `Added ${quantity || 1} ${unit ? unit + ' of ' : ''}${formattedName} to ${category}.`,
+      feedbackMessage: `Added ${quantity} ${finalUnit !== 'item' ? finalUnit + ' of ' : ''}${displayName} to ${category}.`,
       success: true,
     };
-  }
-
-  /**
-   * Extracts numerical quantities, word numbers, units, and tags from phrase
-   */
-  private extractQuantityAndUnit(text: string): {
-    quantity: number;
-    unit: string;
-    cleanedName: string;
-    isOrganic: boolean;
-  } {
-    let quantity = 1;
-    let unit = '';
-    let isOrganic = false;
-    let tokens = text.split(/\s+/).filter(Boolean);
-
-    // Check for organic keyword
-    if (tokens.includes('organic') || tokens.includes('orgánico') || tokens.includes('bio')) {
-      isOrganic = true;
-      tokens = tokens.filter((t) => t !== 'organic' && t !== 'orgánico' && t !== 'bio');
-    }
-
-    // 1. Check numeric digits (e.g. "2", "5.5")
-    const firstDigitIndex = tokens.findIndex((t) => /^\d+(\.\d+)?$/.test(t));
-    if (firstDigitIndex !== -1) {
-      quantity = parseFloat(tokens[firstDigitIndex]);
-      tokens.splice(firstDigitIndex, 1);
-    } else {
-      // 2. Check number words (e.g. "two", "five", "dos", "दो")
-      const wordNumIndex = tokens.findIndex((t) => NUMBER_WORDS[t] !== undefined);
-      if (wordNumIndex !== -1) {
-        quantity = NUMBER_WORDS[tokens[wordNumIndex]];
-        tokens.splice(wordNumIndex, 1);
-      }
-    }
-
-    // 3. Check for units (e.g. "bottles", "packs", "kg", "gallons", "pair")
-    const unitIndex = tokens.findIndex((t) => COMMON_UNITS.includes(t.toLowerCase()));
-    if (unitIndex !== -1) {
-      unit = tokens[unitIndex];
-      tokens.splice(unitIndex, 1);
-
-      // Remove preposition "of" / "de" / "von" following unit
-      if (tokens[0] === 'of' || tokens[0] === 'de' || tokens[0] === 'von' || tokens[0] === 'du') {
-        tokens.shift();
-      }
-    }
-
-    // Remove leading filler articles
-    while (
-      tokens.length > 0 &&
-      ['a', 'an', 'the', 'some', 'el', 'la', 'los', 'las', 'un', 'una', 'le', 'la', 'les', 'des', 'der', 'die', 'das', 'ein', 'eine'].includes(
-        tokens[0].toLowerCase()
-      )
-    ) {
-      tokens.shift();
-    }
-
-    const cleanedName = tokens.join(' ').trim();
-
-    return {
-      quantity: quantity > 0 ? quantity : 1,
-      unit,
-      cleanedName,
-      isOrganic,
-    };
-  }
-
-  /**
-   * Title-cases the item name
-   */
-  private formatItemName(name: string): string {
-    if (!name) return '';
-    return name
-      .split(' ')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
   }
 }
 

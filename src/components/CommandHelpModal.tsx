@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, PlusCircle, Trash2, Search, Radio } from 'lucide-react';
+import { X, PlusCircle, Trash2, Search, Radio, Globe } from 'lucide-react';
 
 interface CommandHelpModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#F7F6F3] dark:bg-zinc-900 rounded-[32px] max-w-2xl w-full max-h-[85vh] shadow-2xl border border-slate-200/90 dark:border-zinc-800 flex flex-col overflow-hidden">
+      <div className="bg-[#F7F6F3] dark:bg-zinc-900 rounded-3xl max-w-2xl w-full max-h-[85vh] shadow-2xl border border-slate-200/90 dark:border-zinc-800 flex flex-col overflow-hidden">
         
         {/* Header */}
         <div className="p-5 border-b border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
@@ -20,7 +20,7 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
               Voice Assistant Command Guide
             </h3>
             <p className="text-xs text-slate-400 font-medium">
-              Natural phrases and wake words recognized by VoiceCart AI
+              Natural Indian English, Hindi, and Tamil phrasing supported by VoiceCart AI
             </p>
           </div>
           <button
@@ -38,31 +38,34 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
           <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700">
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white mb-1.5 text-xs">
               <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
-              <span>Hands-Free Wake Words</span>
+              <span>Hands-Free Wake Words (English, Hindi, Tamil)</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
-              When Hands-Free mode is enabled, start any sentence with a wake word without clicking the mic:
+              When Hands-Free mode is enabled, speak naturally with any wake word:
             </p>
             <div className="flex flex-wrap gap-1.5 font-bold text-slate-800 dark:text-slate-200">
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"Hey Assistant"</span>
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"VoiceCart"</span>
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"Hey Google"</span>
+              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"Namaste Assistant"</span>
+              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"Vanakkam Assistant"</span>
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-700">"Assistant"</span>
             </div>
           </div>
 
-          {/* Section 1: Adding Items & Quantities */}
+          {/* Section 1: Indian English & Multilingual Adding */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
               <PlusCircle className="w-4 h-4 text-emerald-600" />
-              <span>1. Adding Items with Quantities & Units</span>
+              <span>1. Adding Items with Indian Units & Phrasing</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { say: '"Add earphones"', desc: 'Adds earphones to Electronics' },
-                { say: '"I need 3 organic apples"', desc: 'Adds 3 organic apples to Produce' },
-                { say: '"Add 2 bottles of water"', desc: 'Parses quantity (2) and unit (bottles)' },
-                { say: '"Buy 5 oranges"', desc: 'Understands quantity and item' },
+                { say: '"Add 1 kg atta and 2 packets milk"', desc: 'Parses Indian units (kg, packets) & items' },
+                { say: '"2 packet paneer aur doodh add karo"', desc: 'Hindi / Hinglish natural speech' },
+                { say: '"1 kg thakkali and arisi venum"', desc: 'Tamil / Tanglish natural command' },
+                { say: '"Add wireless Bluetooth earphones"', desc: 'Adds earphones to Electronics' },
+                { say: '"Need half kg paneer and 1 packet curd"', desc: 'Fractions (half kg) & Dairy' },
+                { say: '"Add 1 dozen eggs and sourdough bread"', desc: 'Multi-item / dozen parsing' },
               ].map((ex, i) => (
                 <div key={i} className="p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700">
                   <p className="font-bold text-slate-900 dark:text-white">{ex.say}</p>
@@ -81,8 +84,9 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 { say: '"Remove milk from my list"', desc: 'Removes milk from cart' },
-                { say: '"Delete bananas"', desc: 'Deletes bananas immediately' },
-                { say: '"Clear shopping list"', desc: 'Empties the entire list' },
+                { say: '"Doodh hatao"', desc: 'Hindi removal command' },
+                { say: '"Paal delete pannu"', desc: 'Tamil removal command' },
+                { say: '"Clear shopping list"', desc: 'Empties the entire cart' },
               ].map((ex, i) => (
                 <div key={i} className="p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700">
                   <p className="font-bold text-rose-600 dark:text-rose-400">{ex.say}</p>
@@ -96,13 +100,14 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
               <Search className="w-4 h-4 text-blue-500" />
-              <span>3. Search & Price Filtering</span>
+              <span>3. Search & Currency / Price Filtering</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { say: '"Find organic apples"', desc: 'Searches catalog for organic apples' },
                 { say: '"Find toothpaste under $5"', desc: 'Filters products priced under $5.00' },
-                { say: '"Show snacks under $3"', desc: 'Filters snack category by price' },
+                { say: '"Find earphones under 500 rupees"', desc: 'Recognizes Indian Rupees / Rs filter' },
+                { say: '"Show seasonal items"', desc: 'Opens peak harvest recommendations' },
+                { say: '"What is on sale?"', desc: 'Opens weekly discounts & flyer deals' },
               ].map((ex, i) => (
                 <div key={i} className="p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700">
                   <p className="font-bold text-blue-600 dark:text-blue-400">{ex.say}</p>
@@ -116,8 +121,9 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
 
         {/* Footer */}
         <div className="p-4 bg-white dark:bg-zinc-900 border-t border-slate-200/70 dark:border-zinc-800 flex items-center justify-between text-xs">
-          <span className="text-slate-400 font-medium">
-            Supports English (US/IN/UK), Spanish, French, German, Hindi
+          <span className="text-slate-400 font-medium flex items-center gap-1">
+            <Globe className="w-3.5 h-3.5" />
+            <span>Languages: English (India/US/UK), हिन्दी (Hindi), தமிழ் (Tamil), Español, Français, Deutsch</span>
           </span>
           <button
             onClick={onClose}
