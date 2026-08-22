@@ -1,7 +1,8 @@
 import React from 'react';
-import { ShoppingBag, Globe, Volume2, VolumeX, HelpCircle, Sparkles } from 'lucide-react';
+import { Sparkles, Volume2, VolumeX, HelpCircle, ShoppingBag, Radio, MessageSquare } from 'lucide-react';
 import { LanguageOption } from '../types';
 import { SUPPORTED_LANGUAGES } from '../services/speechService';
+import { IridescentOrb } from './IridescentOrb';
 
 interface NavbarProps {
   selectedLang: string;
@@ -9,10 +10,14 @@ interface NavbarProps {
   isMuted: boolean;
   onToggleMute: () => void;
   onOpenHelp: () => void;
-  onOpenSuggestions: () => void;
+  onOpenSuggestions?: () => void;
   itemCount: number;
   totalPrice: number;
   isListening: boolean;
+  activeView: 'voice' | 'cart' | 'suggestions';
+  onSelectView: (view: 'voice' | 'cart' | 'suggestions') => void;
+  isHandsFree: boolean;
+  onToggleHandsFree: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,61 +26,103 @@ export const Navbar: React.FC<NavbarProps> = ({
   isMuted,
   onToggleMute,
   onOpenHelp,
-  onOpenSuggestions,
   itemCount,
   totalPrice,
   isListening,
+  activeView,
+  onSelectView,
+  isHandsFree,
+  onToggleHandsFree,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-30 bg-[#F7F6F3]/85 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-slate-200/60 dark:border-zinc-800/60 transition-colors">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
         
-        {/* Brand Logo & Title */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            {isListening && (
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-            )}
+        {/* Left: Agent Avatar & Title matching inspiration header */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-zinc-950 dark:bg-white flex items-center justify-center p-0.5 shadow-md">
+            <IridescentOrb size="sm" isListening={isListening} />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-              VoiceCart <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">AI</span>
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-              Voice Command Shopping Assistant
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white leading-tight">
+                VoiceCart
+              </h1>
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                AI
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
+              Voice Shopping Agent
             </p>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          
-          {/* Smart Suggestions Trigger */}
+        {/* Center: View Switcher (Voice Chat vs Cart vs Suggestions) */}
+        <div className="hidden md:flex items-center p-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm text-xs font-semibold">
           <button
-            onClick={onOpenSuggestions}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/80 transition-all border border-emerald-200/50 dark:border-emerald-800/50"
-            title="Smart Suggestions"
+            onClick={() => onSelectView('voice')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
+              activeView === 'voice'
+                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden md:inline">Suggestions</span>
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Voice Chat</span>
           </button>
 
-          {/* Multilingual Selector */}
+          <button
+            onClick={() => onSelectView('cart')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
+              activeView === 'cart'
+                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>Cart ({itemCount})</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('suggestions')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
+              activeView === 'suggestions'
+                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Suggestions</span>
+          </button>
+        </div>
+
+        {/* Right Actions: Hands-Free, Language, Mute, Help, Cart Counter */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          
+          {/* Hands-Free Toggle Button */}
+          <button
+            onClick={onToggleHandsFree}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              isHandsFree
+                ? 'bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-300 dark:ring-emerald-900'
+                : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-zinc-800'
+            }`}
+            title="Toggle Hands-Free Wake Word Mode"
+          >
+            <Radio className={`w-3 h-3 ${isHandsFree ? 'animate-pulse' : ''}`} />
+            <span className="hidden sm:inline">{isHandsFree ? 'Hands-Free' : 'Hands-Free'}</span>
+          </button>
+
+          {/* Language Selector */}
           <div className="relative flex items-center">
-            <Globe className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
             <select
               value={selectedLang}
               onChange={(e) => {
                 const found = SUPPORTED_LANGUAGES.find((l) => l.speechCode === e.target.value);
                 if (found) onLanguageChange(found);
               }}
-              className="text-xs font-medium pl-7 pr-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-zinc-800 focus:outline-none cursor-pointer"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang.speechCode} value={lang.speechCode}>
@@ -85,37 +132,36 @@ export const Navbar: React.FC<NavbarProps> = ({
             </select>
           </div>
 
-          {/* Speech TTS Toggle */}
+          {/* Voice Response Mute Toggle */}
           <button
             onClick={onToggleMute}
-            className={`p-2 rounded-lg text-xs font-medium border transition-colors ${
+            className={`p-2 rounded-full text-xs border transition-colors ${
               isMuted
-                ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900'
-                : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950 dark:border-rose-900'
+                : 'bg-white text-slate-600 border-slate-200 dark:bg-zinc-900 dark:text-slate-300 dark:border-zinc-800 shadow-sm'
             }`}
-            title={isMuted ? 'Voice Responses Muted (Click to Unmute)' : 'Voice Responses Active (Click to Mute)'}
+            title={isMuted ? 'Voice Responses Muted' : 'Voice Responses Active'}
           >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           </button>
 
           {/* Help Button */}
           <button
             onClick={onOpenHelp}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
-            title="Voice Command Help & Guide"
+            className="p-2 rounded-full bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-zinc-800 shadow-sm hover:text-slate-900 transition-colors"
+            title="Voice Commands Guide"
           >
-            <HelpCircle className="w-4 h-4" />
+            <HelpCircle className="w-3.5 h-3.5" />
           </button>
 
-          {/* Cart Stats Pill */}
-          <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800 text-xs">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {itemCount} {itemCount === 1 ? 'item' : 'items'}
-            </span>
-            <span className="px-2 py-0.5 font-bold rounded-md bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-              ${totalPrice.toFixed(2)}
-            </span>
-          </div>
+          {/* Cart Icon / Counter for Mobile */}
+          <button
+            onClick={() => onSelectView('cart')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold shadow-sm"
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>${totalPrice.toFixed(2)}</span>
+          </button>
 
         </div>
       </div>

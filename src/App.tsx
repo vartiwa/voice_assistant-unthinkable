@@ -6,27 +6,24 @@ import { speechService, SUPPORTED_LANGUAGES } from './services/speechService';
 import { nlpEngine } from './services/nlpService';
 
 import { Navbar } from './components/Navbar';
-import { VoiceController } from './components/VoiceController';
+import { VoiceChatStream, ChatMessage } from './components/VoiceChatStream';
+import { BottomFloatingBar } from './components/BottomFloatingBar';
+import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
 import { ShoppingListView } from './components/ShoppingListView';
 import { SuggestionsView } from './components/SuggestionsView';
 import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
-import { Sparkles, ShoppingCart, Search } from 'lucide-react';
 
-const STORAGE_KEY = 'voice_cart_items_v1';
+const STORAGE_KEY = 'voice_cart_items_v2';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v2';
 
 export const App: React.FC = () => {
-  // 1. Core Shopping List State (Persistent in localStorage)
+  // 1. Core Shopping List State
   const [items, setItems] = useState<ShoppingItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.warn('Failed to parse saved items', e);
-    }
-    // Default initial starter items for better first-time UX
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
     return [
       {
         id: 'init-1',
@@ -55,11 +52,27 @@ export const App: React.FC = () => {
     ];
   });
 
-  // 2. Suggestions State
+  // 2. Conversational Chat Stream State
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [
+      {
+        id: 'msg-1',
+        sender: 'assistant',
+        text: 'Hello! I am VoiceCart AI. Speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
+        timestamp: 'Just now',
+      },
+    ];
+  });
+
+  // 3. Suggestions State
   const [suggestions] = useState<SmartSuggestion[]>(INITIAL_SMART_SUGGESTIONS);
   const [addedSuggestionIds, setAddedSuggestionIds] = useState<Set<string>>(new Set());
 
-  // 3. Voice Assistant State
+  // 4. Voice Assistant State
   const [isListening, setIsListening] = useState(false);
   const [isHandsFree, setIsHandsFree] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -72,21 +85,27 @@ export const App: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
   const [isMuted, setIsMuted] = useState(false);
 
-  // 4. Modals State
+  // 5. Views & Modals State
+  const [activeView, setActiveView] = useState<'voice' | 'cart' | 'suggestions'>('voice');
+  const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMaxPrice, setSearchMaxPrice] = useState<number | undefined>(undefined);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'list' | 'suggestions'>('list');
 
-  // Persist items to LocalStorage on update
+  // Persist items
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {
-      console.warn('Failed to persist items', e);
-    }
+    } catch (e) {}
   }, [items]);
+
+  // Persist chat
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-15)));
+    } catch (e) {}
+  }, [messages]);
 
   // Voice Command Execution Engine
   const executeCommand = useCallback(
@@ -98,6 +117,25 @@ export const App: React.FC = () => {
         intent: parsed.intent,
       });
 
+      // Add to conversational message stream
+      const userMsg: ChatMessage = {
+        id: `user-${Date.now()}`,
+        sender: 'user',
+        text: rawTranscript,
+        timestamp: 'Just now',
+      };
+
+      const assistantMsg: ChatMessage = {
+        id: `ast-${Date.now() + 1}`,
+        sender: 'assistant',
+        text: parsed.feedbackMessage,
+        timestamp: 'Just now',
+        itemDetails: parsed.itemDetails,
+        intent: parsed.intent,
+      };
+
+      setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
       // Speak response back to user
       if (!isMuted) {
         speechService.speak(parsed.feedbackMessage, selectedLanguage.speechCode);
@@ -105,7 +143,6 @@ export const App: React.FC = () => {
 
       switch (parsed.intent) {
         case 'WAKE_GREETING': {
-          // User said "Hey Assistant" or "VoiceCart"
           break;
         }
 
@@ -142,7 +179,7 @@ export const App: React.FC = () => {
                 particleCount: 25,
                 spread: 45,
                 origin: { y: 0.8 },
-                colors: ['#10b981', '#059669', '#34d399'],
+                colors: ['#f97316', '#fbbf24', '#34d399'],
               });
             } catch (e) {}
           }
@@ -199,7 +236,7 @@ export const App: React.FC = () => {
     [selectedLanguage, isMuted]
   );
 
-  // Refs for continuous speech accumulation and silence debounce
+  // Continuous speech accumulation refs
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<string>('');
 
@@ -241,7 +278,6 @@ export const App: React.FC = () => {
     });
   }, [executeCommand, isHandsFree]);
 
-  // Toggle Voice Recognition
   const toggleListening = () => {
     if (isListening) {
       if (silenceTimerRef.current) {
@@ -261,7 +297,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Toggle Hands-Free Wake Word Mode
   const handleToggleHandsFree = () => {
     const nextState = !isHandsFree;
     setIsHandsFree(nextState);
@@ -289,7 +324,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Immediate dispatch when user clicks Done button
   const handleForceProcessNow = () => {
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
@@ -307,20 +341,18 @@ export const App: React.FC = () => {
     }
   };
 
-  // Language selection change
   const handleLanguageChange = (lang: LanguageOption) => {
     setSelectedLanguage(lang);
     speechService.setLanguage(lang.speechCode);
   };
 
-  // Toggle TTS Mute
   const handleToggleMute = () => {
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
     speechService.setMuted(nextMuted);
   };
 
-  // Shopping List item handlers
+  // Cart operations
   const handleToggleComplete = (id: string) => {
     setItems((prev) =>
       prev.map((item) =>
@@ -354,7 +386,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Apply Smart Substitute
   const handleApplySubstitute = (originalItem: ShoppingItem) => {
     const subKey = Object.keys(SMART_SUBSTITUTES_MAP).find((k) =>
       originalItem.name.toLowerCase().includes(k)
@@ -379,7 +410,7 @@ export const App: React.FC = () => {
       })
     );
 
-    const feedbackMsg = `Substituted ${originalItem.name} with ${substitute.substituteName}.`;
+    const feedbackMsg = `Switched to ${substitute.substituteName}.`;
     setLastFeedback({ message: feedbackMsg, success: true });
 
     if (!isMuted) {
@@ -387,7 +418,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Add Item from Suggestion or Search Modal
   const handleAddCustomItem = (
     itemData: Omit<ShoppingItem, 'id' | 'addedAt' | 'completed'>
   ) => {
@@ -415,7 +445,7 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F7F6F3] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
       
       {/* Top Navbar */}
       <Navbar
@@ -424,72 +454,35 @@ export const App: React.FC = () => {
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onOpenSuggestions={() => setActiveView(activeView === 'suggestions' ? 'list' : 'suggestions')}
+        onOpenSuggestions={() => setActiveView('suggestions')}
         itemCount={items.length}
         totalPrice={totalPrice}
         isListening={isListening}
+        activeView={activeView}
+        onSelectView={setActiveView}
+        isHandsFree={isHandsFree}
+        onToggleHandsFree={handleToggleHandsFree}
       />
 
       {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full flex-1 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 w-full flex-1">
         
-        {/* Voice Command & Control Center */}
-        <VoiceController
-          isListening={isListening}
-          onToggleListen={toggleListening}
-          liveTranscript={liveTranscript}
-          lastFeedback={lastFeedback}
-          audioLevel={audioLevel}
-          onExecuteCommand={executeCommand}
-          selectedLangCode={selectedLanguage.speechCode}
-          onForceProcessNow={handleForceProcessNow}
-          isHandsFree={isHandsFree}
-          onToggleHandsFree={handleToggleHandsFree}
-        />
-
-        {/* View Switcher Tabs (Shopping List vs Smart Suggestions) */}
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveView('list')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                activeView === 'list'
-                  ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Shopping List ({items.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('suggestions')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                activeView === 'suggestions'
-                  ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-emerald-500" />
-              <span>Smart Suggestions ({suggestions.length})</span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
+        {/* Dynamic Views */}
+        {activeView === 'voice' && (
+          <VoiceChatStream
+            messages={messages}
+            liveTranscript={liveTranscript}
+            isListening={isListening}
+            onQuickPrompt={executeCommand}
+            onOpenCatalog={() => {
               setSearchQuery('');
               setSearchMaxPrice(undefined);
               setIsSearchOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Search className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Search Catalog</span>
-          </button>
-        </div>
+          />
+        )}
 
-        {/* Dynamic View Display */}
-        {activeView === 'list' ? (
+        {activeView === 'cart' && (
           <ShoppingListView
             items={items}
             onToggleComplete={handleToggleComplete}
@@ -507,7 +500,9 @@ export const App: React.FC = () => {
               });
             }}
           />
-        ) : (
+        )}
+
+        {activeView === 'suggestions' && (
           <SuggestionsView
             suggestions={suggestions}
             onAddSuggestion={handleAddSuggestion}
@@ -516,12 +511,37 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-        <p>Voice Command Shopping Assistant • Built with Web Speech API & NLP</p>
-      </footer>
+      {/* Bottom Floating Pill Bar with Orange Glowing Mic matching inspiration */}
+      <BottomFloatingBar
+        isListening={isListening}
+        onToggleListen={toggleListening}
+        onOpenImmersiveVoice={() => setIsImmersiveOpen(true)}
+        onOpenCatalog={() => {
+          setSearchQuery('');
+          setSearchMaxPrice(undefined);
+          setIsSearchOpen(true);
+        }}
+        onExecuteCommand={executeCommand}
+        selectedLang={selectedLanguage}
+        onToggleLanguage={() => {}}
+        isHandsFree={isHandsFree}
+      />
 
-      {/* Voice-Activated Catalog Search Modal */}
+      {/* Immersive 3D Iridescent Voice Screen Overlay */}
+      <ImmersiveVoiceOverlay
+        isOpen={isImmersiveOpen}
+        onClose={() => setIsImmersiveOpen(false)}
+        isListening={isListening}
+        onToggleListen={toggleListening}
+        liveTranscript={liveTranscript}
+        lastFeedback={lastFeedback}
+        audioLevel={audioLevel}
+        onDoneProcessing={handleForceProcessNow}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+      />
+
+      {/* Voice-Activated Search Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -530,7 +550,7 @@ export const App: React.FC = () => {
         onAddItem={handleAddCustomItem}
       />
 
-      {/* Voice Command Guide Modal */}
+      {/* Command Guide Modal */}
       <CommandHelpModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
@@ -538,4 +558,5 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
 export default App;
