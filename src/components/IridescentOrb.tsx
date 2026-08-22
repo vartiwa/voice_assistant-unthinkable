@@ -15,15 +15,14 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
   className = '',
   onClick,
 }) => {
-  // Professional, balanced sizes tailored for desktop viewports
   const sizeMap = {
-    sm: 'w-7 h-7',
-    md: 'w-12 h-12',
+    sm: 'w-6 h-6',
+    md: 'w-10 h-10',
     lg: 'w-24 h-24 sm:w-28 sm:h-28',
-    xl: 'w-32 h-32 sm:w-36 sm:h-36',
+    xl: 'w-32 h-32',
   };
 
-  const dynamicScale = isListening ? 1 + (audioLevel / 350) : 1;
+  const dynamicScale = isListening ? 1 + (audioLevel / 400) : 1;
 
   return (
     <div
@@ -34,21 +33,8 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
         transition: 'transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)',
       }}
     >
-      {/* Outer Glow Pulse Rings during speech */}
-      {isListening && (
-        <>
-          <div
-            className="absolute -inset-3 rounded-full bg-gradient-to-tr from-cyan-400 via-pink-400 to-amber-300 opacity-30 blur-lg animate-ping"
-            style={{ animationDuration: '3s' }}
-          />
-          <div
-            className="absolute -inset-5 rounded-full bg-gradient-to-r from-violet-400 via-pink-300 to-teal-300 opacity-20 blur-xl animate-pulse"
-          />
-        </>
-      )}
-
-      {/* 3D Glass Pearl Sphere */}
-      <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl animate-soft-float">
+      {/* Sharp 3D Glass Pearl Sphere */}
+      <div className="relative w-full h-full rounded-full overflow-hidden shadow-lg animate-soft-float">
         
         {/* Multi-layered Liquid Plasma Gradient */}
         <div
@@ -63,7 +49,7 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
               conic-gradient(from 180deg at 50% 50%, #38BDF8 0deg, #F472B6 90deg, #FBBF24 180deg, #34D399 270deg, #38BDF8 360deg)
             `,
             backgroundSize: '140% 140%',
-            filter: 'contrast(1.1) brightness(1.03)',
+            filter: 'contrast(1.08) brightness(1.02)',
           }}
         />
 
@@ -76,7 +62,7 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
           }}
         />
 
-        {/* Secondary Rim Reflection Highlight */}
+        {/* Secondary Rim Reflection */}
         <div
           className="absolute bottom-1 right-2.5 w-1/3 h-1/4 rounded-[100%] opacity-50 pointer-events-none"
           style={{
@@ -86,21 +72,18 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
           }}
         />
 
-        {/* Inner 3D Sphere Depth Shadow */}
+        {/* Inner 3D Sphere Rim */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
-            boxShadow: 'inset 0 -8px 18px rgba(15, 23, 42, 0.25), inset 0 2px 8px rgba(255, 255, 255, 0.9)',
+            boxShadow: 'inset 0 -6px 14px rgba(15, 23, 42, 0.2), inset 0 2px 8px rgba(255, 255, 255, 0.9)',
           }}
         />
       </div>
 
-      {/* Floating Ground Shadow */}
+      {/* Ground Shadow */}
       <div
-        className="absolute -bottom-2.5 w-[65%] h-2.5 rounded-full blur-sm opacity-25 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(147, 51, 234, 0.7) 0%, rgba(0,0,0,0) 70%)',
-        }}
+        className="absolute -bottom-2 w-[60%] h-2 rounded-full blur-xs opacity-20 pointer-events-none bg-slate-800 dark:bg-black"
       />
     </div>
   );

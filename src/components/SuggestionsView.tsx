@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SmartSuggestion, SuggestionType } from '../types';
-import { Calendar, ArrowRightLeft, Tag, Plus, Check, Clock } from 'lucide-react';
+import { Plus, Check, Tag } from 'lucide-react';
 
 interface SuggestionsViewProps {
   suggestions: SmartSuggestion[];
@@ -20,33 +20,18 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       ? suggestions
       : suggestions.filter((s) => s.type === activeTab);
 
-  const getIcon = (type: SuggestionType) => {
-    switch (type) {
-      case 'history':
-        return <Clock className="w-3.5 h-3.5 text-blue-500" />;
-      case 'seasonal':
-        return <Calendar className="w-3.5 h-3.5 text-emerald-500" />;
-      case 'sale':
-        return <Tag className="w-3.5 h-3.5 text-purple-500" />;
-      case 'substitute':
-        return <ArrowRightLeft className="w-3.5 h-3.5 text-amber-500" />;
-    }
-  };
-
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-[28px] p-6 border border-slate-200/80 dark:border-zinc-800 shadow-sm space-y-5 pb-24">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4 pb-28">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-extrabold text-xl text-slate-900 dark:text-white tracking-tight">
-              Smart Suggestions
-            </h2>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-              AI Powered
-            </span>
+            <Tag className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            <h3 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
+              Smart Suggestions & Routine Reorders
+            </h3>
           </div>
-          <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Recommendations tailored to your routine, season, and preferences
           </p>
         </div>
@@ -55,19 +40,19 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       {/* Filter Tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {[
-          { key: 'all', label: 'All Suggestions' },
+          { key: 'all', label: 'All Items' },
           { key: 'history', label: 'Routine Reorder' },
           { key: 'seasonal', label: 'In Season' },
-          { key: 'sale', label: 'Deals & Sales' },
+          { key: 'sale', label: 'Discounts' },
           { key: 'substitute', label: 'Substitutes' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
-            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all ${
+            className={`text-xs px-3 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
               activeTab === tab.key
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                ? 'bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white'
+                : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50'
             }`}
           >
             {tab.label}
@@ -76,20 +61,19 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       </div>
 
       {/* Grid of Recommendation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredSuggestions.map((suggestion) => {
           const isAdded = addedSuggestionIds.has(suggestion.id);
 
           return (
             <div
               key={suggestion.id}
-              className="p-5 rounded-[22px] border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between"
+              className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between space-y-3"
             >
               <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 text-slate-700 dark:text-slate-300 shadow-2xs">
-                    {getIcon(suggestion.type)}
-                    <span>{suggestion.badge}</span>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300">
+                    {suggestion.badge}
                   </span>
 
                   <span className="text-[11px] text-slate-400 font-medium">
@@ -97,20 +81,20 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                   </span>
                 </div>
 
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white mt-2">
+                <h4 className="font-bold text-xs text-slate-900 dark:text-white mt-1.5">
                   {suggestion.title}
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   {suggestion.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-700/60 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between gap-2">
                 <div>
-                  <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                  <span className="font-semibold text-xs text-slate-900 dark:text-white block">
                     {suggestion.item.name}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-zinc-400 font-semibold">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     ${suggestion.item.price.toFixed(2)} / {suggestion.item.unit}
                   </span>
                 </div>
@@ -118,21 +102,21 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                 <button
                   onClick={() => onAddSuggestion(suggestion)}
                   disabled={isAdded}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
                     isAdded
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                      : 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-sm hover:scale-105 active:scale-95'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90'
                   }`}
                 >
                   {isAdded ? (
                     <>
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-3 h-3" />
                       <span>Added</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add</span>
+                      <Plus className="w-3 h-3" />
+                      <span>Add to Cart</span>
                     </>
                   )}
                 </button>

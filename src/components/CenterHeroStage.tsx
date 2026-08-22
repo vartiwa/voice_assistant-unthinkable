@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 import { IridescentOrb } from './IridescentOrb';
-import { 
-  Apple, 
-  Milk, 
-  Headphones, 
-  Filter, 
-  Mic, 
-  MicOff, 
-  Search, 
-  Send,
-  Zap
-} from 'lucide-react';
+import { Search, Mic, MicOff, Send, Command } from 'lucide-react';
 
 interface CenterHeroStageProps {
   liveTranscript: string;
@@ -43,80 +33,58 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
     }
   };
 
-  const quickShortcuts = [
-    {
-      icon: <Apple className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
-      label: 'Produce',
-      cmd: 'Add 3 Honeycrisp apples',
-    },
-    {
-      icon: <Milk className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />,
-      label: 'Dairy',
-      cmd: 'Add 2 gallons of milk',
-    },
-    {
-      icon: <Headphones className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />,
-      label: 'Tech',
-      cmd: 'Add wireless earphones',
-    },
-    {
-      icon: <Filter className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
-      label: 'Budget',
-      cmd: 'Find toothpaste under $5',
-    },
+  const realCommandExamples = [
+    { label: 'Fresh Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
+    { label: 'Dairy', cmd: 'Add 2 Gallons of Whole Milk' },
+    { label: 'Electronics', cmd: 'Add Wireless Bluetooth Earphones' },
+    { label: 'Price Filter', cmd: 'Find Colgate Toothpaste under $5' },
+    { label: 'Seasonal', cmd: 'What is in season and on sale?' },
   ];
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-sm flex flex-col items-center text-center space-y-4">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800 shadow-xs flex flex-col items-center text-center space-y-4">
       
       {/* 1. Center Hero 3D Orb */}
       <div className="relative group cursor-pointer" onClick={onToggleListen}>
-        <IridescentOrb size="lg" isListening={isListening} audioLevel={audioLevel || 22} />
-        
-        <div className="absolute -bottom-2.5 inset-x-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-md flex items-center gap-1">
-            <Mic className="w-3 h-3" />
-            <span>{isListening ? 'Pause Mic' : 'Click to Speak'}</span>
-          </span>
-        </div>
+        <IridescentOrb size="lg" isListening={isListening} audioLevel={audioLevel || 20} />
       </div>
 
-      {/* 2. Hero Status Pill */}
-      <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-slate-50 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 shadow-2xs">
+      {/* 2. Structured Status Badge */}
+      <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
         <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`} />
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
           {isListening
             ? isHandsFree
-              ? '🎙️ Hands-Free Mode: Speak your full command anytime'
-              : 'Listening... (auto-processing on silence)'
+              ? 'Hands-Free Listening Active • Speak your command anytime'
+              : 'Listening... (auto-processing on speech pause)'
             : isHandsFree
-            ? 'Hands-Free Ready • Say "Hey Assistant"'
-            : 'Click the Center Orb or Mic below to speak'}
+            ? 'Hands-Free Standby • Say "Hey Assistant"'
+            : 'Voice Assistant Ready • Click Orb or Microphone to speak'}
         </span>
       </div>
 
-      {/* 3. Real-Time Live Speech Subtitle Banner */}
+      {/* 3. Real-Time Live Speech Subtitle Display */}
       {liveTranscript && (
-        <div className="max-w-xl w-full px-5 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 shadow-sm animate-in fade-in">
-          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block mb-0.5">
+        <div className="max-w-xl w-full px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block mb-0.5">
             Hearing Live:
           </span>
-          <p className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white leading-tight">
+          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
             "{liveTranscript}"
           </p>
         </div>
       )}
 
-      {/* 4. Center Command Input Bar */}
+      {/* 4. Structured Command Input Bar */}
       <div className="max-w-2xl w-full">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 p-1.5 sm:p-2 rounded-2xl bg-slate-50 dark:bg-zinc-800/90 border border-slate-200 dark:border-zinc-700 shadow-xs"
+          className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700"
         >
           <button
             type="button"
             onClick={onOpenCatalog}
-            className="p-2.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 transition-colors shrink-0"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 transition-colors shrink-0"
             title="Browse Catalog"
           >
             <Search className="w-4 h-4" />
@@ -128,8 +96,8 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
             onChange={(e) => setInputText(e.target.value)}
             placeholder={
               isHandsFree
-                ? 'Say "Hey Assistant, add milk" or type here...'
-                : 'Speak or type: "Add 2 bottles of milk", "Find earphones"...'
+                ? 'Say "Hey Assistant, add milk" or type a command...'
+                : 'Type or speak: "Add 2 bottles of milk", "Find earphones"...'
             }
             className="flex-1 bg-transparent px-2 py-1.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
           />
@@ -137,20 +105,20 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           {inputText.trim() && (
             <button
               type="submit"
-              className="p-2 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:scale-105 transition-transform shrink-0"
+              className="p-2 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs shrink-0"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           )}
 
-          {/* Glowing Orange Microphone Button */}
+          {/* Microphone Action Button */}
           <button
             type="button"
             onClick={onToggleListen}
-            className={`p-3 rounded-xl text-white font-bold transition-all shadow-md shrink-0 flex items-center justify-center ${
+            className={`p-2.5 rounded-lg text-white font-bold transition-all shrink-0 flex items-center justify-center ${
               isListening
-                ? 'bg-gradient-to-tr from-orange-600 to-amber-500 animate-pulse ring-2 ring-orange-400'
-                : 'bg-gradient-to-tr from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 hover:scale-105'
+                ? 'bg-orange-600 ring-2 ring-orange-400'
+                : 'bg-orange-500 hover:bg-orange-600'
             }`}
             title={isListening ? 'Stop Listening' : 'Start Voice Input'}
           >
@@ -159,20 +127,19 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         </form>
       </div>
 
-      {/* 5. Clean Voice Shortcut Pills */}
-      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
-          <Zap className="w-3 h-3 text-amber-500" />
-          <span>Quick Prompts:</span>
+      {/* 5. Minimalist Command Prompts Bar */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+        <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
+          <Command className="w-3 h-3" />
+          <span>Examples:</span>
         </span>
-        {quickShortcuts.map((item, idx) => (
+        {realCommandExamples.map((item, idx) => (
           <button
             key={idx}
             onClick={() => onQuickPrompt(item.cmd)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
           >
-            {item.icon}
-            <span>"{item.cmd}"</span>
+            "{item.cmd}"
           </button>
         ))}
       </div>
