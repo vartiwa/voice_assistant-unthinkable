@@ -248,6 +248,48 @@ class SpeechService {
     }
   }
 
+  // Select warm, natural female voice across platforms (Zira, Samantha, Google, Victoria, Swara, etc.)
+  private getBestFemaleVoice(langCode: string): SpeechSynthesisVoice | null {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    const shortLang = langCode.substring(0, 2).toLowerCase();
+    const exactLang = langCode.toLowerCase().replace('_', '-');
+
+    const preferredFemaleKeywords = [
+      'female', 'woman', 'zira', 'samantha', 'victoria', 'karen', 'moira',
+      'fiona', 'tessa', 'sangeeta', 'veena', 'priya', 'swara', 'monica',
+      'amelie', 'marie', 'petra', 'marlene', 'vicki', 'natural', 'online',
+      'google', 'microsoft'
+    ];
+
+    const langVoices = voices.filter((v) => {
+      const vLang = v.lang.toLowerCase().replace('_', '-');
+      return vLang === exactLang || vLang.startsWith(shortLang);
+    });
+
+    if (langVoices.length === 0) {
+      return voices.find((v) => {
+        const name = v.name.toLowerCase();
+        return preferredFemaleKeywords.some((kw) => name.includes(kw));
+      }) || voices[0] || null;
+    }
+
+    const femaleMatch = langVoices.find((v) => {
+      const name = v.name.toLowerCase();
+      if (name.includes('david') || name.includes('george') || name.includes('mark') || name.includes('male') || name.includes('ravi') || name.includes('guy')) {
+        return false;
+      }
+      return preferredFemaleKeywords.some((kw) => name.includes(kw));
+    });
+
+    if (femaleMatch) return femaleMatch;
+
+    const nonMale = langVoices.find((v) => !v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('david'));
+    return nonMale || langVoices[0];
+  }
+
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -267,13 +309,10 @@ class SpeechService {
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
+      utterance.rate = 1.0;
+      utterance.pitch = 1.08; // Slightly elevated pitch for warm, friendly, natural female voice tone
 
-      const voices = window.speechSynthesis.getVoices();
-      const matchedVoice = voices.find(
-        (v) => v.lang.startsWith(langCode.substring(0, 2)) || v.lang === langCode
-      );
+      const matchedVoice = this.getBestFemaleVoice(langCode);
       if (matchedVoice) {
         utterance.voice = matchedVoice;
       }
