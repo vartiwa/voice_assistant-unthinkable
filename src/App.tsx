@@ -8,7 +8,6 @@ import { nlpEngine } from './services/nlpService';
 import { Navbar } from './components/Navbar';
 import { CenterHeroStage } from './components/CenterHeroStage';
 import { InteractionFeedCard } from './components/InteractionFeedCard';
-import { CalendarContextCard } from './components/CalendarContextCard';
 import { CompactSuggestionsWidget } from './components/CompactSuggestionsWidget';
 import { ChatMessage } from './components/VoiceChatStream';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
@@ -484,7 +483,7 @@ export const App: React.FC = () => {
       {/* Main Desktop Workspace Canvas with Framed Boundary */}
       <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 space-y-5">
         
-        {/* 1. TRUE CENTER HERO SECTION: The 3D Orb as Primary Hero */}
+        {/* 1. TRUE CENTER HERO SECTION: The 3D Orb Flanked by Context (Left) and Routine/Seasonal Suggestions (Right) */}
         <CenterHeroStage
           liveTranscript={liveTranscript}
           isListening={isListening}
@@ -498,20 +497,20 @@ export const App: React.FC = () => {
           }}
           onExecuteCommand={executeCommand}
           isHandsFree={isHandsFree}
+          suggestions={suggestions}
+          onAddSuggestion={handleAddSuggestion}
+          addedSuggestionIds={addedSuggestionIds}
         />
 
         {/* 2. Side-by-Side Lower Desktop Canvas */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
-          {/* Left Column (5 cols / 42%): Interaction Feed + Subtle Calendar Restock Card */}
+          {/* Left Column (5 cols / 42%): Interaction Feed */}
           <div className="lg:col-span-5 xl:col-span-5 space-y-4">
             <InteractionFeedCard
               messages={messages}
               onOpenCart={() => setActiveRightTab('cart')}
             />
-
-            {/* Subtle Date & Month-End Restock Context Card */}
-            <CalendarContextCard />
           </div>
 
           {/* Right Column (7 cols / 58%): Shopping Cart + Compact Habitual & Seasonal Suggestions */}
