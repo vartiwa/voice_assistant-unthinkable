@@ -8,6 +8,8 @@ import { nlpEngine } from './services/nlpService';
 import { Navbar } from './components/Navbar';
 import { CenterHeroStage } from './components/CenterHeroStage';
 import { InteractionFeedCard } from './components/InteractionFeedCard';
+import { CalendarContextCard } from './components/CalendarContextCard';
+import { CompactSuggestionsWidget } from './components/CompactSuggestionsWidget';
 import { ChatMessage } from './components/VoiceChatStream';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
 import { ShoppingListView } from './components/ShoppingListView';
@@ -16,8 +18,8 @@ import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
 import { ShoppingBag, Sparkles } from 'lucide-react';
 
-const STORAGE_KEY = 'voice_cart_items_v6';
-const CHAT_STORAGE_KEY = 'voice_cart_chat_v6';
+const STORAGE_KEY = 'voice_cart_items_v7';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v7';
 
 export const App: React.FC = () => {
   // 1. Shopping List State
@@ -479,8 +481,8 @@ export const App: React.FC = () => {
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Main Edge-to-Edge Desktop Canvas with Structured Boundary */}
-      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+      {/* Main Desktop Workspace Canvas with Framed Boundary */}
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 space-y-5">
         
         {/* 1. TRUE CENTER HERO SECTION: The 3D Orb as Primary Hero */}
         <CenterHeroStage
@@ -498,25 +500,28 @@ export const App: React.FC = () => {
           isHandsFree={isHandsFree}
         />
 
-        {/* 2. Side-by-Side Lower Desktop Canvas: Interaction Feed (Left) & Shopping Cart (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 2. Side-by-Side Lower Desktop Canvas */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
-          {/* Left Column (5 cols / 42%): Interaction Dialogue Feed */}
-          <div className="lg:col-span-5 xl:col-span-5">
+          {/* Left Column (5 cols / 42%): Interaction Feed + Subtle Calendar Restock Card */}
+          <div className="lg:col-span-5 xl:col-span-5 space-y-4">
             <InteractionFeedCard
               messages={messages}
               onOpenCart={() => setActiveRightTab('cart')}
             />
+
+            {/* Subtle Date & Month-End Restock Context Card */}
+            <CalendarContextCard />
           </div>
 
-          {/* Right Column (7 cols / 58%): Spacious Shopping Cart & Suggestions */}
+          {/* Right Column (7 cols / 58%): Shopping Cart + Compact Habitual & Seasonal Suggestions */}
           <div className="lg:col-span-7 xl:col-span-7 space-y-4">
             
             {/* View Switcher Tabs on Right Canvas */}
-            <div className="flex items-center p-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-2xs text-xs font-bold">
+            <div className="flex items-center p-1 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xs text-xs font-bold">
               <button
                 onClick={() => setActiveRightTab('cart')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
                   activeRightTab === 'cart'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
@@ -528,18 +533,18 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setActiveRightTab('suggestions')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
                   activeRightTab === 'suggestions'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Smart Suggestions & Routine Deals</span>
+                <span>Full Intelligence Explorer</span>
               </button>
             </div>
 
-            {/* Content Display */}
+            {/* Main Shopping Cart or Full Explorer */}
             {activeRightTab === 'suggestions' ? (
               <SuggestionsView
                 suggestions={suggestions}
@@ -547,23 +552,32 @@ export const App: React.FC = () => {
                 addedSuggestionIds={addedSuggestionIds}
               />
             ) : (
-              <ShoppingListView
-                items={items}
-                onToggleComplete={handleToggleComplete}
-                onUpdateQuantity={handleUpdateQuantity}
-                onDeleteItem={handleDeleteItem}
-                onApplySubstitute={handleApplySubstitute}
-                onClearList={handleClearList}
-                onQuickAddItem={(name, category, price) => {
-                  handleAddCustomItem({
-                    name,
-                    category,
-                    quantity: 1,
-                    unit: 'item',
-                    price,
-                  });
-                }}
-              />
+              <>
+                <ShoppingListView
+                  items={items}
+                  onToggleComplete={handleToggleComplete}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onDeleteItem={handleDeleteItem}
+                  onApplySubstitute={handleApplySubstitute}
+                  onClearList={handleClearList}
+                  onQuickAddItem={(name, category, price) => {
+                    handleAddCustomItem({
+                      name,
+                      category,
+                      quantity: 1,
+                      unit: 'item',
+                      price,
+                    });
+                  }}
+                />
+
+                {/* Compact Habitual Reorder & Seasonal Suggestions Widget */}
+                <CompactSuggestionsWidget
+                  suggestions={suggestions}
+                  onAddSuggestion={handleAddSuggestion}
+                  addedSuggestionIds={addedSuggestionIds}
+                />
+              </>
             )}
           </div>
 
