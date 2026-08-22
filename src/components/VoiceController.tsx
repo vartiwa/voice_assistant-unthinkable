@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Send, Sparkles, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mic, MicOff, Send, Sparkles, CheckCircle2, AlertCircle, ArrowRight, Radio } from 'lucide-react';
 import { isSpeechRecognitionSupported } from '../services/speechService';
 
 interface VoiceControllerProps {
@@ -11,58 +11,51 @@ interface VoiceControllerProps {
   onExecuteCommand: (text: string) => void;
   selectedLangCode: string;
   onForceProcessNow?: () => void;
+  isHandsFree?: boolean;
+  onToggleHandsFree?: () => void;
 }
 
 const QUICK_COMMANDS: Record<string, string[]> = {
   'en-US': [
-    'Add earphones',
-    'I need 3 organic apples',
-    'Add 2 bottles of water',
-    'Buy 5 oranges',
-    'Find toothpaste under $5',
-    'Remove milk from my list',
-    'What do you suggest?'
+    'Hey Assistant, add earphones',
+    'Hey Assistant, I need 3 apples',
+    'VoiceCart, add 2 bottles of water',
+    'Hey Assistant, find toothpaste under $5',
+    'Hey Assistant, remove milk',
+    'Hey Assistant, what do you suggest?'
   ],
   'en-IN': [
-    'Add earphones',
-    'Add 2 litres of milk',
-    'I need 1 kg apples',
-    'Buy 5 oranges',
-    'Find coffee under 10 dollars',
-    'Show suggestions'
+    'Hey Assistant, add earphones',
+    'VoiceCart, add 2 litres of milk',
+    'Hey Assistant, I need 1 kg apples',
+    'Hey Assistant, find coffee under 10 dollars',
+    'VoiceCart, show suggestions'
   ],
   'es-ES': [
-    'Añadir auriculares',
-    'Añadir 2 manzanas',
-    'Necesito leche',
-    'Comprar 3 plátanos',
-    'Buscar manzanas bajo 5 dólares',
-    'Eliminar leche',
-    'Sugerencias'
+    'Hey Assistant, añadir auriculares',
+    'Hey Assistant, añadir 2 manzanas',
+    'VoiceCart, necesito leche',
+    'Hey Assistant, buscar manzanas bajo 5 dólares',
+    'VoiceCart, sugerencias'
   ],
   'fr-FR': [
-    'Ajouter des écouteurs',
-    'Ajouter 2 pommes',
-    'J’ai besoin de lait',
-    'Acheter du pain',
-    'Supprimer le lait',
-    'Suggestions'
+    'Hey Assistant, ajouter des écouteurs',
+    'VoiceCart, ajouter 2 pommes',
+    'Hey Assistant, j’ai besoin de lait',
+    'VoiceCart, suggestions'
   ],
   'de-DE': [
-    'Kopfhörer hinzufügen',
-    '2 Äpfel hinzufügen',
-    'Ich brauche Milch',
-    'Zahnpasta unter 5 Euro finden',
-    'Milch entfernen',
-    'Vorschläge'
+    'Hey Assistant, Kopfhörer hinzufügen',
+    'VoiceCart, 2 Äpfel hinzufügen',
+    'Hey Assistant, Zahnpasta unter 5 Euro finden',
+    'VoiceCart, Vorschläge'
   ],
   'hi-IN': [
-    'इयरफ़ोन जोड़ो',
-    'दूध जोड़ो',
-    '२ सेब चाहिए',
-    'पानी की २ बोतलें जोड़ो',
-    'दूध हटाओ',
-    'सुझाव दिखाओ'
+    'हे असिस्टेंट, इयरफ़ोन जोड़ो',
+    'हे असिस्टेंट, दूध जोड़ो',
+    'वॉइस कार्ट, २ सेब चाहिए',
+    'हे असिस्टेंट, पानी की २ बोतलें जोड़ो',
+    'वॉइस कार्ट, सुझाव दिखाओ'
   ]
 };
 
@@ -75,6 +68,8 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
   onExecuteCommand,
   selectedLangCode,
   onForceProcessNow,
+  isHandsFree = false,
+  onToggleHandsFree,
 }) => {
   const [manualText, setManualText] = useState('');
   const [isSupported, setIsSupported] = useState(true);
@@ -95,10 +90,38 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
 
   return (
     <div className="w-full bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
-      {/* Top Header / Audio Status */}
+      
+      {/* Top Bar: Hands-Free Wake Word Toggle */}
+      <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <Radio className={`w-4 h-4 ${isHandsFree ? 'text-emerald-500 animate-pulse' : 'text-slate-400'}`} />
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+            Hands-Free Wake Word Mode
+          </span>
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hidden sm:inline">
+            Say: "Hey Assistant" or "VoiceCart"
+          </span>
+        </div>
+
+        {onToggleHandsFree && (
+          <button
+            onClick={onToggleHandsFree}
+            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-xl transition-all ${
+              isHandsFree
+                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400/30'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${isHandsFree ? 'bg-white animate-ping' : 'bg-slate-400'}`} />
+            <span>{isHandsFree ? 'Hands-Free ON' : 'Turn ON Hands-Free'}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Main Microphone Area */}
       <div className="flex flex-col items-center text-center mb-4">
         
-        {/* Main Microphone Action Button */}
+        {/* Main Microphone Button */}
         <div className="relative my-2">
           {/* Animated Pulse Rings when listening */}
           {isListening && (
@@ -116,7 +139,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
 
           <button
             onClick={onToggleListen}
-            aria-label={isListening ? 'Stop listening and process' : 'Start voice command'}
+            aria-label={isListening ? 'Stop listening' : 'Start voice command'}
             className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform active:scale-95 ${
               isListening
                 ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/30 animate-pulse-slow ring-4 ring-rose-200 dark:ring-rose-950'
@@ -139,7 +162,13 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
             }`}
           />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            {isListening ? 'Listening continuously... Speak your full sentence' : 'Tap the microphone to speak'}
+            {isListening
+              ? isHandsFree
+                ? '🎙️ Hands-Free Active: Say "Hey Assistant, add earphones"...'
+                : 'Listening continuously... Speak your full sentence'
+              : isHandsFree
+              ? 'Hands-Free Ready. Tap to re-activate mic'
+              : 'Tap the microphone or enable Hands-Free mode'}
           </span>
         </div>
 
@@ -159,7 +188,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
           </div>
         )}
 
-        {/* Live Speech Transcript Preview with "Done Speaking" Action */}
+        {/* Live Speech Transcript Preview with "Done" Action */}
         {liveTranscript && (
           <div className="mt-3 px-4 py-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 max-w-lg w-full text-center animate-in fade-in">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -233,7 +262,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Tap to Test Voice Prompts</span>
+          <span>Wake Word & Voice Prompts (Tap to test)</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {currentQuickCommands.map((cmd, idx) => (

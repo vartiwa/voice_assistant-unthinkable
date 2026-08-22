@@ -199,16 +199,46 @@ export class NLPEngine {
    */
   public parseCommand(rawTranscript: string, _lang: string = 'en'): ParsedVoiceCommand {
     const text = rawTranscript.trim();
-    const lower = text.toLowerCase();
 
     if (!text) {
       return {
         intent: 'UNKNOWN',
         rawText: text,
-        feedbackMessage: "I didn't catch that. Try saying 'Add milk' or 'Find apples'.",
+        feedbackMessage: "I didn't catch that. Try saying 'Add milk' or 'Hey Assistant, find apples'.",
         success: false,
       };
     }
+
+    // Wake Word Detection & Stripping (supports "Hey Assistant", "VoiceCart", "Hey Google", "Assistant")
+    const wakeWordMatches = [
+      /^hey\s+(?:assistant|cart|google|voice\s*cart)[,\s]*/i,
+      /^ok\s+(?:assistant|google|cart)[,\s]*/i,
+      /^(?:voice\s*cart|assistant)[,\s]*/i,
+      /^hello\s+(?:assistant|cart|google)[,\s]*/i,
+    ];
+
+    let cleanedText = text;
+    let hadWakeWord = false;
+
+    for (const rx of wakeWordMatches) {
+      if (rx.test(cleanedText)) {
+        hadWakeWord = true;
+        cleanedText = cleanedText.replace(rx, '').trim();
+        break;
+      }
+    }
+
+    // If user ONLY said the wake word ("Hey Assistant", "VoiceCart", etc.)
+    if (hadWakeWord && !cleanedText) {
+      return {
+        intent: 'WAKE_GREETING',
+        rawText: text,
+        feedbackMessage: "Yes, I'm listening! What would you like to add to your list?",
+        success: true,
+      };
+    }
+
+    const lower = (cleanedText || text).toLowerCase().trim();
 
     // 1. HELP COMMANDS
     if (

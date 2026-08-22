@@ -61,6 +61,7 @@ export const App: React.FC = () => {
 
   // 3. Voice Assistant State
   const [isListening, setIsListening] = useState(false);
+  const [isHandsFree, setIsHandsFree] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
   const [lastFeedback, setLastFeedback] = useState<{
@@ -103,11 +104,15 @@ export const App: React.FC = () => {
       }
 
       switch (parsed.intent) {
+        case 'WAKE_GREETING': {
+          // User said "Hey Assistant" or "VoiceCart"
+          break;
+        }
+
         case 'ADD_ITEM': {
           if (parsed.itemDetails) {
             const detail = parsed.itemDetails;
             setItems((prev) => {
-              // Check if item already in list (case-insensitive name match)
               const existingIdx = prev.findIndex(
                 (i) => i.name.toLowerCase() === detail.name.toLowerCase()
               );
@@ -132,7 +137,6 @@ export const App: React.FC = () => {
               return [newItem, ...prev];
             });
 
-            // Trigger celebration confetti
             try {
               confetti({
                 particleCount: 25,
@@ -199,6 +203,44 @@ export const App: React.FC = () => {
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<string>('');
 
+  const startListeningSession = useCallback(() => {
+    latestTranscriptRef.current = '';
+    setLiveTranscript('');
+    speechService.startListening({
+      onStart: () => setIsListening(true),
+      onEnd: () => {
+        setIsListening(false);
+        setAudioLevel(0);
+      },
+      onError: (err) => {
+        setIsListening(false);
+        setLastFeedback({ message: err, success: false });
+      },
+      onResult: (transcript) => {
+        latestTranscriptRef.current = transcript;
+        setLiveTranscript(transcript);
+
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+
+        silenceTimerRef.current = setTimeout(() => {
+          const finalCmd = latestTranscriptRef.current.trim();
+          if (finalCmd) {
+            if (!isHandsFree) {
+              speechService.stopListening();
+              setIsListening(false);
+            }
+            setLiveTranscript('');
+            latestTranscriptRef.current = '';
+            executeCommand(finalCmd);
+          }
+        }, 1800);
+      },
+      onAudioLevel: (level) => setAudioLevel(level),
+    });
+  }, [executeCommand, isHandsFree]);
+
   // Toggle Voice Recognition
   const toggleListening = () => {
     if (isListening) {
@@ -215,39 +257,34 @@ export const App: React.FC = () => {
         executeCommand(pendingText);
       }
     } else {
-      latestTranscriptRef.current = '';
+      startListeningSession();
+    }
+  };
+
+  // Toggle Hands-Free Wake Word Mode
+  const handleToggleHandsFree = () => {
+    const nextState = !isHandsFree;
+    setIsHandsFree(nextState);
+
+    if (nextState) {
+      startListeningSession();
+      setLastFeedback({
+        message: 'Hands-Free Mode activated! Say "Hey Assistant, add milk" anytime.',
+        success: true,
+      });
+      if (!isMuted) {
+        speechService.speak('Hands free mode active. You can say: Hey Assistant, add milk.', selectedLanguage.speechCode);
+      }
+    } else {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+      speechService.stopListening();
+      setIsListening(false);
       setLiveTranscript('');
-      speechService.startListening({
-        onStart: () => setIsListening(true),
-        onEnd: () => {
-          setIsListening(false);
-          setAudioLevel(0);
-        },
-        onError: (err) => {
-          setIsListening(false);
-          setLastFeedback({ message: err, success: false });
-        },
-        onResult: (transcript) => {
-          latestTranscriptRef.current = transcript;
-          setLiveTranscript(transcript);
-
-          // Reset silence timer on every new word
-          if (silenceTimerRef.current) {
-            clearTimeout(silenceTimerRef.current);
-          }
-
-          // Wait 1.8s of silence after speech ends before auto-processing
-          silenceTimerRef.current = setTimeout(() => {
-            const finalCmd = latestTranscriptRef.current.trim();
-            if (finalCmd) {
-              speechService.stopListening();
-              setIsListening(false);
-              setLiveTranscript('');
-              executeCommand(finalCmd);
-            }
-          }, 1800);
-        },
-        onAudioLevel: (level) => setAudioLevel(level),
+      setLastFeedback({
+        message: 'Hands-Free Mode disabled.',
+        success: true,
       });
     }
   };
@@ -259,9 +296,12 @@ export const App: React.FC = () => {
       silenceTimerRef.current = null;
     }
     const finalCmd = latestTranscriptRef.current.trim();
-    speechService.stopListening();
-    setIsListening(false);
+    if (!isHandsFree) {
+      speechService.stopListening();
+      setIsListening(false);
+    }
     setLiveTranscript('');
+    latestTranscriptRef.current = '';
     if (finalCmd) {
       executeCommand(finalCmd);
     }
@@ -403,6 +443,8 @@ export const App: React.FC = () => {
           onExecuteCommand={executeCommand}
           selectedLangCode={selectedLanguage.speechCode}
           onForceProcessNow={handleForceProcessNow}
+          isHandsFree={isHandsFree}
+          onToggleHandsFree={handleToggleHandsFree}
         />
 
         {/* View Switcher Tabs (Shopping List vs Smart Suggestions) */}

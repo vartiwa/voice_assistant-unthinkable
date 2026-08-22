@@ -67,6 +67,7 @@ export type VoiceIntent =
   | 'SHOW_SUGGESTIONS'
   | 'CLEAR_LIST'
   | 'HELP'
+  | 'WAKE_GREETING'
   | 'UNKNOWN';
 
 export interface ParsedVoiceCommand {

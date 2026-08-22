@@ -256,10 +256,24 @@ class SpeechService {
 
       utterance.onend = () => {
         this.isSpeakingTTS = false;
+        if (this.isListening && this.activeHandlers) {
+          setTimeout(() => {
+            try {
+              this.recognition?.start();
+            } catch (e) {}
+          }, 300);
+        }
         resolve();
       };
       utterance.onerror = () => {
         this.isSpeakingTTS = false;
+        if (this.isListening && this.activeHandlers) {
+          setTimeout(() => {
+            try {
+              this.recognition?.start();
+            } catch (e) {}
+          }, 300);
+        }
         resolve();
       };
 
