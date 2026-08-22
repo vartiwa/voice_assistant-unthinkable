@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SmartSuggestion, SuggestionType } from '../types';
-import { Plus, Check, Tag } from 'lucide-react';
+import { Plus, Check, Compass, RotateCcw, Leaf, Percent, ArrowRightLeft } from 'lucide-react';
 
 interface SuggestionsViewProps {
   suggestions: SmartSuggestion[];
@@ -21,18 +21,19 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       : suggestions.filter((s) => s.type === activeTab);
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4 pb-28">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-4">
+      
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-            <h3 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
-              Smart Suggestions & Routine Reorders
+            <Compass className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight uppercase">
+              Intelligence Radar & Routine Reorders
             </h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Recommendations tailored to your routine, season, and preferences
+            Predictive replenish alerts based on consumption habits and seasonal harvests
           </p>
         </div>
       </div>
@@ -40,22 +41,23 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       {/* Filter Tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {[
-          { key: 'all', label: 'All Items' },
-          { key: 'history', label: 'Routine Reorder' },
-          { key: 'seasonal', label: 'In Season' },
-          { key: 'sale', label: 'Discounts' },
-          { key: 'substitute', label: 'Substitutes' },
+          { key: 'all', label: 'All Items', icon: <Compass className="w-3 h-3" /> },
+          { key: 'history', label: 'Routine Reorders', icon: <RotateCcw className="w-3 h-3" /> },
+          { key: 'seasonal', label: 'In-Season Harvest', icon: <Leaf className="w-3 h-3 text-emerald-500" /> },
+          { key: 'sale', label: 'Weekly Flyer Deals', icon: <Percent className="w-3 h-3 text-amber-500" /> },
+          { key: 'substitute', label: 'Dietary Switches', icon: <ArrowRightLeft className="w-3 h-3 text-blue-500" /> },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
-            className={`text-xs px-3 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
+            className={`text-xs px-3 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
               activeTab === tab.key
                 ? 'bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white'
                 : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50'
             }`}
           >
-            {tab.label}
+            {tab.icon}
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -68,15 +70,15 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
           return (
             <div
               key={suggestion.id}
-              className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between space-y-3"
+              className="p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between space-y-3"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300 font-mono">
                     {suggestion.badge}
                   </span>
 
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] font-mono text-slate-400 font-medium">
                     {suggestion.reason}
                   </span>
                 </div>
@@ -94,7 +96,7 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                   <span className="font-semibold text-xs text-slate-900 dark:text-white block">
                     {suggestion.item.name}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400 tabular-nums">
                     ${suggestion.item.price.toFixed(2)} / {suggestion.item.unit}
                   </span>
                 </div>
@@ -116,7 +118,7 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                   ) : (
                     <>
                       <Plus className="w-3 h-3" />
-                      <span>Add to Cart</span>
+                      <span>+ Add to Cart</span>
                     </>
                   )}
                 </button>

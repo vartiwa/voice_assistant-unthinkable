@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Send, Sparkles, CheckCircle2, AlertCircle, ArrowRight, Radio } from 'lucide-react';
+import { Mic, MicOff, Send, Zap, CheckCircle2, AlertCircle, ArrowRight, Radio } from 'lucide-react';
 import { isSpeechRecognitionSupported } from '../services/speechService';
 
 interface VoiceControllerProps {
@@ -261,7 +261,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
       {/* Quick Voice Command Suggestion Chips */}
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
           <span>Wake Word & Voice Prompts (Tap to test)</span>
         </div>
         <div className="flex flex-wrap gap-1.5">

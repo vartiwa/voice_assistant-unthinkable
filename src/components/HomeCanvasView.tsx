@@ -1,6 +1,6 @@
 import React from 'react';
 import { IridescentOrb } from './IridescentOrb';
-import { Sparkles, ArrowRight, Zap, ShoppingBag, Tag, Leaf, RefreshCw } from 'lucide-react';
+import { Compass, ArrowRight, Zap, ShoppingBag, Tag, Leaf, RefreshCw } from 'lucide-react';
 
 interface HomeCanvasViewProps {
   onQuickPrompt: (cmd: string) => void;
@@ -24,7 +24,7 @@ export const HomeCanvasView: React.FC<HomeCanvasViewProps> = ({
 }) => {
   const promptCards = [
     {
-      icon: <Sparkles className="w-4 h-4 text-zinc-950 dark:text-white" />,
+      icon: <Compass className="w-4 h-4 text-zinc-950 dark:text-white" />,
       title: 'Daily Essentials',
       desc: 'Add 2 gallons of whole milk and 3 organic Honeycrisp apples',
       cmd: 'Add 2 gallons of whole milk and 3 organic apples',

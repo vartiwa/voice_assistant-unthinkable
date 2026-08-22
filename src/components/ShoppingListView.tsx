@@ -61,9 +61,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   }, {});
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const estimatedTax = subtotal * 0.05; // 5% estimated tax
+  const estimatedTax = subtotal * 0.05;
   const totalCost = subtotal + estimatedTax;
   const completedCount = items.filter((i) => i.completed).length;
+  const progressPercent = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
   const handleCopyList = () => {
     const text = items
@@ -91,32 +92,42 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const availableCategories = Array.from(new Set(items.map((i) => i.category)));
 
   return (
-    <div className="space-y-4 pb-28">
+    <div className="space-y-4">
       
-      {/* 1. Sharp Summary Header Card */}
-      <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-xs">
+      {/* 1. High-Utility Summary Header Card */}
+      <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-              <h3 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
-                Current Shopping Cart
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">
+                Active Shopping Manifest
               </h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
-                {items.length} {items.length === 1 ? 'item' : 'items'}
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
+                {items.length} items
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {completedCount} of {items.length} items marked completed
-            </p>
+            
+            {/* Progress status */}
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="w-24 h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                {completedCount}/{items.length} packed ({progressPercent}%)
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">
-                Total (incl. tax)
+              <span className="text-[10px] font-mono font-semibold text-slate-400 block uppercase tracking-wider">
+                Total (est. tax incl.)
               </span>
-              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              <span className="text-xl font-mono font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
                 ${totalCost.toFixed(2)}
               </span>
             </div>
@@ -125,15 +136,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               <button
                 onClick={handleCopyList}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors border border-slate-200 dark:border-zinc-700"
-                title="Copy shopping list to clipboard"
+                title="Copy shopping list"
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-3.5 h-3.5" />
               </button>
 
               {items.length > 0 && (
                 <button
                   onClick={onClearList}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 transition-colors border border-rose-200 dark:border-rose-900"
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 transition-colors border border-rose-200 dark:border-rose-900"
                 >
                   Clear All
                 </button>
@@ -142,32 +153,32 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         </div>
 
-        {/* Copy Notification Toast */}
+        {/* Copy Toast */}
         {copiedNotification && (
-          <div className="mt-3 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs text-center font-bold animate-in fade-in">
-            ✓ Copied shopping list to clipboard!
+          <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs text-center font-bold animate-in fade-in">
+            ✓ Copied manifest to clipboard!
           </div>
         )}
 
         {/* Search & Category Filter Bar */}
         {items.length > 0 && (
-          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-zinc-800 space-y-2.5">
+          <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search items in cart..."
+                placeholder="Filter cart items (e.g. Milk, Apple, Sony)..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400"
               />
             </div>
 
-            {/* Category Filter Pills */}
+            {/* Department Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
                 onClick={() => setFilterCategory('All')}
-                className={`text-xs px-3 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
+                className={`text-xs px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
                   filterCategory === 'All'
                     ? 'bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white'
                     : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50'
@@ -179,7 +190,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 <button
                   key={cat}
                   onClick={() => setFilterCategory(cat)}
-                  className={`text-xs px-3 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
+                  className={`text-xs px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all border ${
                     filterCategory === cat
                       ? 'bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white'
                       : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50'
@@ -193,16 +204,16 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         )}
       </div>
 
-      {/* 2. Structured Quick-Add Form */}
+      {/* 2. Structured Quick-Add Input Form */}
       <form
         onSubmit={handleQuickAddSubmit}
-        className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-xs"
+        className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-2 rounded-xl border border-slate-200/90 dark:border-zinc-800 shadow-xs"
       >
         <input
           type="text"
           value={quickName}
           onChange={(e) => setQuickName(e.target.value)}
-          placeholder="Add an item manually (e.g. Earphones, Bananas, Bread)..."
+          placeholder="Manual item entry (e.g. Sourdough bread, Almond milk)..."
           className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 focus:outline-none text-slate-800 dark:text-slate-100"
         />
 
@@ -227,23 +238,23 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         <button
           type="submit"
           disabled={!quickName.trim()}
-          className="px-4 py-1.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 disabled:opacity-30 text-xs font-bold rounded-lg transition-all shrink-0"
+          className="px-3.5 py-1.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 disabled:opacity-30 text-xs font-bold rounded-lg transition-all shrink-0"
         >
-          Add Item
+          + Add
         </button>
       </form>
 
-      {/* 3. Items Grouped by Department */}
+      {/* 3. Categorized Items */}
       {items.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-10 text-center border border-slate-200 dark:border-zinc-800 shadow-xs">
-          <div className="w-10 h-10 mx-auto rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 mb-2.5">
-            <Package className="w-5 h-5" />
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 text-center border border-slate-200/90 dark:border-zinc-800 shadow-xs">
+          <div className="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 mb-2">
+            <Package className="w-4 h-4" />
           </div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-            Your Shopping Cart is Empty
+          <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            Shopping Cart Empty
           </h4>
           <p className="text-xs text-slate-400 mt-1">
-            Speak into your microphone: "Hey Assistant, add earphones and milk"
+            Speak into your microphone: "Hey Assistant, add milk and earphones"
           </p>
         </div>
       ) : (
@@ -251,16 +262,16 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           return (
             <div
               key={category}
-              className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
+              className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-2.5"
             >
               {/* Department Heading */}
-              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-slate-400 dark:bg-zinc-600" />
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {category}
                   </h4>
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-[11px] font-mono text-slate-400">
                     ({categoryItems.length})
                   </span>
                 </div>
@@ -277,12 +288,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className={`py-3 flex items-center justify-between gap-3 transition-all ${
-                        item.completed ? 'opacity-50' : 'opacity-100'
+                      className={`py-2.5 flex items-center justify-between gap-3 transition-all ${
+                        item.completed ? 'opacity-40' : 'opacity-100'
                       }`}
                     >
                       {/* Checkbox & Item Details */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <button
                           onClick={() => onToggleComplete(item.id)}
                           className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
@@ -310,7 +321,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                             )}
                             {item.brand && (
                               <span className="text-xs text-slate-400 font-medium">
-                                • {item.brand}
+                                · {item.brand}
                               </span>
                             )}
                           </div>
@@ -319,10 +330,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           {hasSubstitute && !item.completed && (
                             <button
                               onClick={() => onApplySubstitute(item)}
-                              className="mt-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors font-medium"
-                              title={`Substitute with ${hasSubstitute.substituteName}`}
+                              className="mt-1 inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700 transition-colors font-medium"
+                              title={`Switch to ${hasSubstitute.substituteName}`}
                             >
-                              <ArrowRightLeft className="w-3 h-3" />
+                              <ArrowRightLeft className="w-3 h-3 text-blue-500" />
                               <span>Switch to {hasSubstitute.substituteName}</span>
                             </button>
                           )}
@@ -338,7 +349,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-xs font-bold px-2 min-w-[20px] text-center text-slate-900 dark:text-white">
+                          <span className="text-xs font-mono font-bold px-2 min-w-[20px] text-center text-slate-900 dark:text-white">
                             {item.quantity}
                           </span>
                           <button
@@ -350,10 +361,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                         </div>
 
                         <div className="w-16 text-right">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                          <span className="text-xs font-mono font-bold text-slate-900 dark:text-white block tabular-nums">
                             ${(item.price * item.quantity).toFixed(2)}
                           </span>
-                          <span className="text-[10px] text-slate-400 block">
+                          <span className="text-[10px] font-mono text-slate-400 block">
                             ${item.price.toFixed(2)}/{item.unit || 'item'}
                           </span>
                         </div>

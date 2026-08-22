@@ -6,13 +6,14 @@ import {
   Mic, 
   MicOff, 
   Send, 
-  Command, 
   Calendar, 
   Clock, 
   RotateCcw, 
-  Sparkles, 
   Plus, 
-  Check 
+  Check,
+  TrendingUp,
+  Leaf,
+  Activity
 } from 'lucide-react';
 
 interface CenterHeroStageProps {
@@ -77,79 +78,109 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
   };
 
   const realCommandExamples = [
-    { label: 'Pantry & Dairy', cmd: 'Add 1 kg Atta and 2 packets of milk' },
-    { label: 'Fresh Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
-    { label: 'Hindi / Hinglish', cmd: '2 packet paneer aur doodh add karo' },
-    { label: 'Tamil / Tanglish', cmd: '1 kg thakkali and arisi venum' },
-    { label: 'Electronics', cmd: 'Add Wireless Bluetooth Earphones' },
+    { label: 'Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
+    { label: 'Pantry', cmd: 'Add 1 kg Atta and 2 packets milk' },
+    { label: 'Hindi', cmd: '2 packet paneer aur doodh add karo' },
+    { label: 'Tamil', cmd: '1 kg thakkali and arisi venum' },
+    { label: 'Filter', cmd: 'Find toothpaste under $5' },
   ];
 
-  // Top 2-3 prominent suggestions (Habitual + Seasonal) to flank the orb on the right
   const flankSuggestions = suggestions.slice(0, 2);
 
+  // Equalizer visualizer bars (5 bars)
+  const barHeights = [
+    Math.min(100, Math.max(15, (audioLevel * 1.2) % 100)),
+    Math.min(100, Math.max(25, (audioLevel * 1.8) % 100)),
+    Math.min(100, Math.max(35, (audioLevel * 2.2) % 100)),
+    Math.min(100, Math.max(20, (audioLevel * 1.6) % 100)),
+    Math.min(100, Math.max(15, (audioLevel * 1.1) % 100)),
+  ];
+
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-4">
       
-      {/* 3-Column Top Hero Row: [Left Context] --- [Center 3D Orb] --- [Right Flank Suggestions] */}
+      {/* 3-Column Symmetrical Hero Row */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
         
-        {/* Left Flank (3 or 4 cols): Subtle Date/Time & Month-End Cycle Widget */}
-        <div className="md:col-span-3 lg:col-span-3 text-left p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/80 space-y-2 hidden md:block">
-          <div className="flex items-center justify-between">
+        {/* Left Flank: Replenishment & Calendar Status */}
+        <div className="md:col-span-3 lg:col-span-3 text-left p-3.5 rounded-xl bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/60 space-y-2.5 hidden md:block">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/60 dark:border-zinc-700/60">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span>{currentDateStr}</span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+            <div className="flex items-center gap-1 text-[11px] font-mono font-semibold text-slate-400">
               <Clock className="w-3 h-3" />
               <span>{currentTimeStr}</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 dark:border-zinc-700/60 space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px]">
               <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
                 <RotateCcw className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                <span>Month-End Cycle</span>
+                <span>Restock Cycle</span>
               </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white dark:bg-zinc-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-zinc-600">
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
                 {daysToMonthEnd}d left
               </span>
             </div>
-            <p className="text-[10.5px] text-slate-400 leading-tight">
+
+            {/* Micro Progress Bar */}
+            <div className="w-full h-1 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-emerald-500 rounded-full transition-all"
+                style={{ width: `${Math.max(10, 100 - (daysToMonthEnd / 30) * 100)}%` }}
+              />
+            </div>
+
+            <p className="text-[10px] text-slate-400 leading-tight">
               Pantry & household staple restock window active.
             </p>
           </div>
         </div>
 
-        {/* Center Primary Hero Stage (6 cols): 3D Orb & Status */}
+        {/* Center Primary Hero Stage: 3D Orb, Audio Equalizer & Status */}
         <div className="md:col-span-6 lg:col-span-6 flex flex-col items-center text-center space-y-2.5">
+          
           <div className="relative group cursor-pointer" onClick={onToggleListen}>
             <IridescentOrb size="lg" isListening={isListening} audioLevel={audioLevel || 20} />
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs">
-            <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`} />
-            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-              {isListening
-                ? isHandsFree
-                  ? 'Hands-Free Active • Speak command anytime'
-                  : 'Listening... (auto-processing on pause)'
-                : isHandsFree
-                ? 'Hands-Free Ready • Say "Hey Assistant"'
-                : 'Click Orb or Microphone to speak'}
-            </span>
+          {/* Audio Visualizer & Status Badge */}
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 text-xs font-semibold">
+            {isListening ? (
+              <div className="flex items-center gap-1">
+                <div className="flex items-end gap-0.5 h-3">
+                  {barHeights.map((h, i) => (
+                    <span
+                      key={i}
+                      className="w-0.5 bg-emerald-500 rounded-full transition-all duration-75"
+                      style={{ height: `${h}%` }}
+                    />
+                  ))}
+                </div>
+                <span className="text-emerald-700 dark:text-emerald-300 font-bold ml-1">
+                  {isHandsFree ? 'LIVE (Hands-Free)' : 'LISTENING...'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
+                <span>{isHandsFree ? 'Hands-Free Standby • Say "Hey Assistant"' : 'Click Orb or Mic to speak'}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Flank (3 or 4 cols): Subtle Habitual & Seasonal Suggestions Widget */}
-        <div className="md:col-span-3 lg:col-span-3 text-left p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/80 space-y-2 hidden md:block">
-          <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-zinc-700/60">
+        {/* Right Flank: Routine Reorders & Seasonal Specials */}
+        <div className="md:col-span-3 lg:col-span-3 text-left p-3.5 rounded-xl bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/60 space-y-2 hidden md:block">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/60 dark:border-zinc-700/60">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Routine & Harvest</span>
             </div>
-            <span className="text-[10px] font-semibold text-slate-400">Suggestions</span>
+            <span className="text-[10px] font-mono text-slate-400">Quick-Add</span>
           </div>
 
           <div className="space-y-1.5">
@@ -159,14 +190,14 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
               return (
                 <div
                   key={sug.id}
-                  className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-700"
+                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700"
                 >
                   <div className="min-w-0">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
+                    <span className="font-semibold text-xs text-slate-900 dark:text-white block truncate">
                       {sug.item.name}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-medium block">
-                      ${sug.item.price.toFixed(2)} • {sug.badge}
+                    <span className="text-[10px] font-mono text-slate-400 block">
+                      ${sug.item.price.toFixed(2)} · {sug.badge}
                     </span>
                   </div>
 
@@ -174,7 +205,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
                     <button
                       onClick={() => onAddSuggestion(sug)}
                       disabled={isAdded}
-                      className={`p-1 rounded-lg text-xs font-bold shrink-0 transition-all ${
+                      className={`p-1 rounded-md text-xs font-bold shrink-0 transition-all ${
                         isAdded
                           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200'
                           : 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90'
@@ -194,17 +225,21 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
 
       {/* Real-Time Live Speech Subtitle Display */}
       {liveTranscript && (
-        <div className="max-w-xl mx-auto w-full px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-left">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block mb-0.5">
-            Hearing Live:
-          </span>
+        <div className="max-w-xl mx-auto w-full px-4 py-2.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-left animate-in fade-in">
+          <div className="flex items-center justify-between text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-0.5">
+            <span>HEARING REAL-TIME:</span>
+            <span className="flex items-center gap-1">
+              <Activity className="w-3 h-3 animate-pulse" />
+              <span>TRANSCRIBING</span>
+            </span>
+          </div>
           <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
             "{liveTranscript}"
           </p>
         </div>
       )}
 
-      {/* Structured Center Command Input Bar */}
+      {/* Handcrafted Command Input Bar */}
       <div className="max-w-2xl mx-auto w-full">
         <form
           onSubmit={handleSubmit}
@@ -214,7 +249,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
             type="button"
             onClick={onOpenCatalog}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 transition-colors shrink-0"
-            title="Browse Product Catalog"
+            title="Browse Catalog (⌘K)"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -240,14 +275,14 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
             </button>
           )}
 
-          {/* Glowing Orange Microphone Button */}
+          {/* Tactile Microphone Trigger */}
           <button
             type="button"
             onClick={onToggleListen}
             className={`p-2.5 rounded-lg text-white font-bold transition-all shrink-0 flex items-center justify-center ${
               isListening
                 ? 'bg-orange-600 ring-2 ring-orange-400 animate-pulse'
-                : 'bg-orange-500 hover:bg-orange-600'
+                : 'bg-orange-500 hover:bg-orange-600 active:scale-95'
             }`}
             title={isListening ? 'Stop Listening' : 'Start Voice Input'}
           >
@@ -256,17 +291,17 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         </form>
       </div>
 
-      {/* Minimalist Command Prompts Bar */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-        <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
-          <Command className="w-3 h-3" />
-          <span>Examples:</span>
+      {/* Clean Prompt Chips */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+        <span className="text-[11px] font-mono text-slate-400 mr-1 flex items-center gap-1">
+          <Leaf className="w-3 h-3 text-emerald-500" />
+          <span>PROMPTS:</span>
         </span>
         {realCommandExamples.map((item, idx) => (
           <button
             key={idx}
             onClick={() => onQuickPrompt(item.cmd)}
-            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors border border-slate-200/60 dark:border-zinc-700/60"
           >
             "{item.cmd}"
           </button>

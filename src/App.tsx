@@ -15,7 +15,7 @@ import { ShoppingListView } from './components/ShoppingListView';
 import { SuggestionsView } from './components/SuggestionsView';
 import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag, Compass } from 'lucide-react';
 
 const STORAGE_KEY = 'voice_cart_items_v7';
 const CHAT_STORAGE_KEY = 'voice_cart_chat_v7';
@@ -538,7 +538,7 @@ export const App: React.FC = () => {
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Compass className="w-4 h-4 text-blue-500" />
                 <span>Full Intelligence Explorer</span>
               </button>
             </div>
