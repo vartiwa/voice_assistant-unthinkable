@@ -504,9 +504,9 @@ export const App: React.FC = () => {
           </div>
 
           {/* ========================================================= */}
-          {/* RIGHT SIDEBAR (4 Cols / 33%): Full-Height Dedicated CART */}
+          {/* RIGHT SIDEBAR (4 Cols / 33%): Dedicated CART            */}
           {/* ========================================================= */}
-          <div className="lg:col-span-4 sticky top-16 space-y-4">
+          <div className="lg:col-span-4 space-y-4">
             <ShoppingListView
               items={items}
               onToggleComplete={handleToggleComplete}
