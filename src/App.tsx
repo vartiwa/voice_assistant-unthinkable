@@ -6,7 +6,8 @@ import { speechService, SUPPORTED_LANGUAGES } from './services/speechService';
 import { nlpEngine } from './services/nlpService';
 
 import { Navbar } from './components/Navbar';
-import { DesktopMainStage } from './components/DesktopMainStage';
+import { CenterHeroStage } from './components/CenterHeroStage';
+import { InteractionFeedCard } from './components/InteractionFeedCard';
 import { ChatMessage } from './components/VoiceChatStream';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
 import { ShoppingListView } from './components/ShoppingListView';
@@ -15,8 +16,8 @@ import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
 import { ShoppingBag, Sparkles } from 'lucide-react';
 
-const STORAGE_KEY = 'voice_cart_items_v5';
-const CHAT_STORAGE_KEY = 'voice_cart_chat_v5';
+const STORAGE_KEY = 'voice_cart_items_v6';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v6';
 
 export const App: React.FC = () => {
   // 1. Shopping List State
@@ -74,7 +75,7 @@ export const App: React.FC = () => {
       {
         id: 'msg-1',
         sender: 'assistant',
-        text: 'Hello! I am VoiceCart AI. Speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
+        text: 'Hello! I am VoiceCart AI. Speak naturally into your microphone or say "Hey Assistant" to add items hands-free.',
         timestamp: 'Just now',
       },
     ];
@@ -98,7 +99,7 @@ export const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
 
   // 5. Views & Modals State
-  const [activeView, setActiveView] = useState<'chat' | 'cart' | 'suggestions'>('cart');
+  const [activeRightTab, setActiveRightTab] = useState<'cart' | 'suggestions'>('cart');
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,7 +130,7 @@ export const App: React.FC = () => {
         intent: parsed.intent,
       });
 
-      // Add to conversation stream
+      // Add to conversation log
       const userMsg: ChatMessage = {
         id: `user-${Date.now()}`,
         sender: 'user',
@@ -227,7 +228,7 @@ export const App: React.FC = () => {
         }
 
         case 'SHOW_SUGGESTIONS': {
-          setActiveView('suggestions');
+          setActiveRightTab('suggestions');
           break;
         }
 
@@ -469,70 +470,77 @@ export const App: React.FC = () => {
         onOpenHelp={() => setIsHelpOpen(true)}
         itemCount={items.length}
         totalPrice={totalPrice}
-        activeView={activeView}
-        onSelectView={setActiveView}
+        activeView={activeRightTab === 'cart' ? 'cart' : 'suggestions'}
+        onSelectView={(v) => {
+          if (v === 'cart') setActiveRightTab('cart');
+          if (v === 'suggestions') setActiveRightTab('suggestions');
+        }}
         isHandsFree={isHandsFree}
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Edge-to-Edge Desktop Workspace Canvas */}
-      <main className="w-full px-4 sm:px-6 lg:px-10 py-5 flex-1">
+      {/* Main Edge-to-Edge Desktop Canvas */}
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-5 flex-1 space-y-6">
         
-        {/* Full-Width Desktop Grid: Left Voice Stage (5 cols) & Right Cart (7 cols) */}
+        {/* 1. TRUE CENTER HERO SECTION: The 3D Orb as Primary Hero */}
+        <CenterHeroStage
+          liveTranscript={liveTranscript}
+          isListening={isListening}
+          audioLevel={audioLevel}
+          onToggleListen={toggleListening}
+          onQuickPrompt={executeCommand}
+          onOpenCatalog={() => {
+            setSearchQuery('');
+            setSearchMaxPrice(undefined);
+            setIsSearchOpen(true);
+          }}
+          onExecuteCommand={executeCommand}
+          isHandsFree={isHandsFree}
+        />
+
+        {/* 2. Side-by-Side Lower Desktop Canvas: Interaction Feed (Left) & Shopping Cart (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Left Column: Voice Assistant & Interaction Stage */}
-          <div className="lg:col-span-5 xl:col-span-5 sticky top-20">
-            <DesktopMainStage
+          {/* Left Column (5 cols / 42%): Interaction Dialogue Feed */}
+          <div className="lg:col-span-5 xl:col-span-5">
+            <InteractionFeedCard
               messages={messages}
-              liveTranscript={liveTranscript}
-              isListening={isListening}
-              audioLevel={audioLevel}
-              onToggleListen={toggleListening}
-              onQuickPrompt={executeCommand}
-              onOpenCart={() => setActiveView('cart')}
-              onOpenCatalog={() => {
-                setSearchQuery('');
-                setSearchMaxPrice(undefined);
-                setIsSearchOpen(true);
-              }}
-              onExecuteCommand={executeCommand}
-              isHandsFree={isHandsFree}
+              onOpenCart={() => setActiveRightTab('cart')}
             />
           </div>
 
-          {/* Right Column: Full-Width Shopping Cart & Smart Suggestions Canvas */}
+          {/* Right Column (7 cols / 58%): Spacious Shopping Cart & Suggestions */}
           <div className="lg:col-span-7 xl:col-span-7 space-y-4">
             
-            {/* View Switcher Bar on Right Canvas */}
+            {/* View Switcher Tabs on Right Canvas */}
             <div className="flex items-center p-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-2xs text-xs font-bold">
               <button
-                onClick={() => setActiveView('cart')}
+                onClick={() => setActiveRightTab('cart')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
-                  activeView === 'cart' || activeView === 'chat'
+                  activeRightTab === 'cart'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Live Shopping Cart ({items.length} items)</span>
+                <span>Shopping Cart ({items.length} items)</span>
               </button>
 
               <button
-                onClick={() => setActiveView('suggestions')}
+                onClick={() => setActiveRightTab('suggestions')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
-                  activeView === 'suggestions'
+                  activeRightTab === 'suggestions'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Smart Suggestions & Deals</span>
+                <span>Smart Suggestions & Routine Deals</span>
               </button>
             </div>
 
             {/* Content Display */}
-            {activeView === 'suggestions' ? (
+            {activeRightTab === 'suggestions' ? (
               <SuggestionsView
                 suggestions={suggestions}
                 onAddSuggestion={handleAddSuggestion}
@@ -562,7 +570,7 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Immersive 3D Voice Screen Overlay */}
+      {/* Fullscreen Immersive 3D Voice Screen Modal */}
       <ImmersiveVoiceOverlay
         isOpen={isImmersiveOpen}
         onClose={() => setIsImmersiveOpen(false)}
