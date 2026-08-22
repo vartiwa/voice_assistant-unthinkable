@@ -403,8 +403,8 @@ export class NLPEngine {
 
     // Comprehensive Wake Word Detection with phonetic mis-hearings & "hey add to cart"
     const wakeWordMatches = [
-      /^(?:hey|ok|okay|hello|namaste|vanakkam|hi|oye|listen)\s+(?:assistant|assistence|assistance|assist|cart|add\s+to\s+cart|google|voice\s*cart|voicecart)[,\s]*/i,
-      /^(?:voice\s*cart|voicecart|assistant|assistence|assistance|shopping assistant|hey\s+add\s+to\s+cart|add\s+to\s+cart|put\s+in\s+cart|cart\s+mein\s+daalo)[,\s]*/i,
+      /^(?:hey|ok|okay|hello|namaste|vanakkam|hi|oye|listen|yo)\s+(?:assistant|assistent|asistant|acistant|assistance|assistence|assist|cart|add\s+to\s+cart|google|voice\s*cart|voicecart)[,\s]*/i,
+      /^(?:voice\s*cart|voicecart|assistant|assistent|asistant|acistant|assistance|assistence|shopping assistant|hey\s+add\s+to\s+cart|add\s+to\s+cart|put\s+in\s+cart|cart\s+mein\s+daalo)[,\s]*/i,
     ];
 
     let cleanedText = text;

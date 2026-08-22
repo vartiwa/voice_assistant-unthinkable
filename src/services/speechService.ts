@@ -36,6 +36,7 @@ class SpeechService {
   private ttsMuted: boolean = false;
   private isSpeakingTTS: boolean = false;
   private activeHandlers: SpeechRecognitionHandlers | null = null;
+  private restartTimeout: any = null;
 
   constructor() {
     this.initRecognition();
@@ -49,7 +50,6 @@ class SpeechService {
 
     if (SpeechRecognitionAPI) {
       this.recognition = new SpeechRecognitionAPI();
-      // Continuous = true allows complete sentences without early cutoffs
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
       this.recognition.maxAlternatives = 1;
@@ -75,11 +75,11 @@ class SpeechService {
     return this.ttsMuted;
   }
 
-  public startListening(handlers: SpeechRecognitionHandlers) {
-    if (this.isSpeakingTTS) {
-      return;
-    }
+  public getIsListening(): boolean {
+    return this.isListening;
+  }
 
+  public startListening(handlers: SpeechRecognitionHandlers) {
     this.activeHandlers = handlers;
 
     if (!this.recognition) {
@@ -91,14 +91,14 @@ class SpeechService {
       return;
     }
 
-    if (this.isListening) {
-      return;
-    }
+    this.isListening = true;
 
     this.recognition.onstart = () => {
       this.isListening = true;
-      handlers.onStart();
-      this.startAudioVisualizer(handlers.onAudioLevel);
+      if (this.activeHandlers) {
+        this.activeHandlers.onStart();
+        this.startAudioVisualizer(this.activeHandlers.onAudioLevel);
+      }
     };
 
     this.recognition.onresult = (event: any) => {
@@ -107,7 +107,6 @@ class SpeechService {
       let fullTranscript = '';
       let hasFinal = false;
 
-      // Accumulate entire sentence across all results
       for (let i = 0; i < event.results.length; ++i) {
         const res = event.results[i];
         fullTranscript += res[0].transcript + ' ';
@@ -117,14 +116,14 @@ class SpeechService {
       }
 
       const clean = fullTranscript.trim();
-      if (clean) {
-        handlers.onResult(clean, hasFinal);
+      if (clean && this.activeHandlers) {
+        this.activeHandlers.onResult(clean, hasFinal);
       }
     };
 
     this.recognition.onerror = (event: any) => {
       if (event.error === 'no-speech') {
-        // Natural pause - do not abort or disconnect
+        // Normal pause - continuous loop keeps running
         return;
       }
       if (event.error === 'aborted') {
@@ -133,50 +132,67 @@ class SpeechService {
 
       let msg = 'Speech recognition error';
       if (event.error === 'not-allowed') {
-        msg = 'Microphone access denied. Please allow microphone permission in your browser URL bar.';
+        msg = 'Microphone permission denied. Please allow mic access in your browser.';
+        this.isListening = false;
+        this.stopAudioVisualizer();
+        if (this.activeHandlers) this.activeHandlers.onError(msg);
+        return;
       } else if (event.error === 'network') {
         msg = 'Network connection issue with speech service.';
       }
 
-      this.isListening = false;
-      this.stopAudioVisualizer();
-      handlers.onError(msg);
+      if (this.isListening && !this.isSpeakingTTS) {
+        this.safeRestartRecognition();
+      }
     };
 
     this.recognition.onend = () => {
-      this.stopAudioVisualizer();
-
-      // If user is still marked as listening and TTS is not active, auto-restart to prevent unexpected dropouts
+      // Auto-restart if hands-free/continuous listening is active and not currently playing TTS
       if (this.isListening && !this.isSpeakingTTS && this.activeHandlers) {
-        try {
-          this.recognition.start();
-          return;
-        } catch (e) {
-          // Ignore if already starting
-        }
+        this.safeRestartRecognition();
+        return;
       }
 
-      this.isListening = false;
-      handlers.onEnd();
+      this.stopAudioVisualizer();
+      if (!this.isListening && this.activeHandlers) {
+        this.activeHandlers.onEnd();
+      }
     };
 
     try {
       this.recognition.lang = this.currentLanguage;
       this.recognition.start();
     } catch (err: any) {
-      console.warn('SpeechRecognition start error:', err);
+      // Already running is okay
     }
+  }
+
+  private safeRestartRecognition() {
+    if (this.restartTimeout) {
+      clearTimeout(this.restartTimeout);
+    }
+    this.restartTimeout = setTimeout(() => {
+      if (this.isListening && !this.isSpeakingTTS && this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (e) {
+          // Ignore if already started
+        }
+      }
+    }, 60);
   }
 
   public stopListening() {
     this.isListening = false;
     this.activeHandlers = null;
+    if (this.restartTimeout) {
+      clearTimeout(this.restartTimeout);
+      this.restartTimeout = null;
+    }
     if (this.recognition) {
       try {
         this.recognition.stop();
-      } catch (err) {
-        console.warn('Error stopping recognition', err);
-      }
+      } catch (err) {}
     }
     this.stopAudioVisualizer();
   }
@@ -185,7 +201,7 @@ class SpeechService {
     if (!onAudioLevel || typeof window === 'undefined') return;
 
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && !this.mediaStream) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         this.mediaStream = stream;
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -242,6 +258,13 @@ class SpeechService {
       this.isSpeakingTTS = true;
       window.speechSynthesis.cancel();
 
+      // Temporarily abort recognition to avoid hearing ourselves
+      if (this.recognition) {
+        try {
+          this.recognition.abort();
+        } catch (e) {}
+      }
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
       utterance.rate = 1.05;
@@ -255,28 +278,16 @@ class SpeechService {
         utterance.voice = matchedVoice;
       }
 
-      utterance.onend = () => {
+      const resumeAfterTTS = () => {
         this.isSpeakingTTS = false;
         if (this.isListening && this.activeHandlers) {
-          setTimeout(() => {
-            try {
-              this.recognition?.start();
-            } catch (e) {}
-          }, 300);
+          this.safeRestartRecognition();
         }
         resolve();
       };
-      utterance.onerror = () => {
-        this.isSpeakingTTS = false;
-        if (this.isListening && this.activeHandlers) {
-          setTimeout(() => {
-            try {
-              this.recognition?.start();
-            } catch (e) {}
-          }, 300);
-        }
-        resolve();
-      };
+
+      utterance.onend = resumeAfterTTS;
+      utterance.onerror = resumeAfterTTS;
 
       window.speechSynthesis.speak(utterance);
     });
