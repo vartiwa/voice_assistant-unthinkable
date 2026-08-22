@@ -72,7 +72,7 @@ export const App: React.FC = () => {
       {
         id: 'msg-1',
         sender: 'assistant',
-        text: 'Hello! I am V-Cart AI. Speak naturally or say "Hey Assistant" to add groceries and items.',
+        text: 'Hello! I am Voice Assistance AI. Speak naturally or say "Hey Assistant" to add groceries and items.',
         timestamp: 'Just now',
       },
     ];

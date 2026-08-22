@@ -1,4 +1,4 @@
-# 🎙️ Voice Command Shopping Assistant
+# 🎙️ Voice Assistance
 
 > A modern, voice-based shopping list manager with real-time natural language processing, multilingual speech recognition, smart suggestions, and voice-activated search.
 
