@@ -28,8 +28,8 @@ export const InteractionFeedCard: React.FC<InteractionFeedCardProps> = ({
         </span>
       </div>
 
-      {/* Message Stream */}
-      <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 flex-1">
+      {/* Message Stream with isolated scrolling */}
+      <div className="space-y-3 overflow-y-auto overscroll-contain max-h-[360px] pr-1 flex-1 scrollbar-thin">
         {messages.map((msg) => (
           <div
             key={msg.id}
