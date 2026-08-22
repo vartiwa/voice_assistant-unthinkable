@@ -274,6 +274,7 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
+        // Lightning-fast 900ms silence debounce for snappy voice processing
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
@@ -285,7 +286,7 @@ export const App: React.FC = () => {
             latestTranscriptRef.current = '';
             executeCommand(finalCmd);
           }
-        }, 1800);
+        }, 900);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });
@@ -482,8 +483,8 @@ export const App: React.FC = () => {
         {/* Desktop Split View: Wide Main Stage on Left, Live Shopping Cart & Suggestions on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Main Stage / Voice Chat Column (Takes 7 or 8 cols on laptop) */}
-          <div className="lg:col-span-7 xl:col-span-8">
+          {/* Main Stage / Voice Chat Column (Takes 5 cols on laptop) */}
+          <div className="lg:col-span-5 xl:col-span-5">
             <DesktopMainStage
               messages={messages}
               liveTranscript={liveTranscript}
@@ -496,8 +497,8 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* Right Panel Column (Takes 5 or 4 cols on laptop - always accessible!) */}
-          <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-6">
+          {/* Right Panel Column (Expanded to 7 cols on laptop for generous space!) */}
+          <div className="lg:col-span-7 xl:col-span-7 sticky top-20 space-y-4">
             
             {/* Tab Pill to switch between Cart & Suggestions on Desktop */}
             <div className="flex items-center p-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm text-xs font-bold">
