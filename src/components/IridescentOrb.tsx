@@ -5,6 +5,7 @@ interface IridescentOrbProps {
   isListening?: boolean;
   audioLevel?: number;
   className?: string;
+  onClick?: () => void;
 }
 
 export const IridescentOrb: React.FC<IridescentOrbProps> = ({
@@ -12,89 +13,103 @@ export const IridescentOrb: React.FC<IridescentOrbProps> = ({
   isListening = false,
   audioLevel = 0,
   className = '',
+  onClick,
 }) => {
   const sizeMap = {
     sm: 'w-10 h-10',
     md: 'w-20 h-20',
     lg: 'w-48 h-48',
-    xl: 'w-64 h-64 sm:w-72 sm:h-72',
+    xl: 'w-64 h-64 sm:w-80 sm:h-80',
   };
 
-  const dynamicScale = isListening ? 1 + (audioLevel / 220) : 1;
+  const dynamicScale = isListening ? 1 + (audioLevel / 200) : 1;
 
   return (
     <div
-      className={`relative flex items-center justify-center ${sizeMap[size]} ${className}`}
+      onClick={onClick}
+      className={`relative flex items-center justify-center cursor-pointer select-none ${sizeMap[size]} ${className}`}
       style={{
         transform: `scale(${dynamicScale})`,
-        transition: 'transform 0.15s ease-out',
+        transition: 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)',
       }}
     >
-      {/* Outer Glow Pulse Rings */}
+      {/* Ambient Pulsing Aura behind the orb */}
       {isListening && (
         <>
           <div
-            className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-400 via-pink-400 to-amber-300 opacity-30 blur-2xl animate-ping"
+            className="absolute -inset-6 rounded-full bg-gradient-to-tr from-cyan-400 via-fuchsia-400 to-amber-300 opacity-40 blur-2xl animate-ping"
             style={{ animationDuration: '3s' }}
           />
           <div
-            className="absolute -inset-4 rounded-full bg-gradient-to-r from-violet-400 via-emerald-300 to-orange-300 opacity-25 blur-xl animate-pulse"
+            className="absolute -inset-10 rounded-full bg-gradient-to-r from-violet-400 via-pink-300 to-teal-300 opacity-30 blur-3xl animate-pulse"
           />
         </>
       )}
 
-      {/* Main 3D Holographic Orb Base */}
+      {/* Realistic 3D Soap Bubble / Pearl Orb */}
       <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl animate-float">
         
-        {/* Holographic Multi-Color Rotating Gradient */}
+        {/* Base Pearl & Glass Gradient */}
         <div
           className="absolute inset-0 rounded-full animate-iridescent"
           style={{
             background: `
-              radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 20%, transparent 50%),
-              radial-gradient(circle at 80% 20%, #A5F3FC 0%, transparent 40%),
-              radial-gradient(circle at 20% 80%, #F472B6 0%, transparent 50%),
-              radial-gradient(circle at 75% 75%, #FDE047 0%, transparent 45%),
-              radial-gradient(circle at 50% 50%, #C084FC 0%, transparent 60%),
-              linear-gradient(135deg, #67E8F9 0%, #E879F9 40%, #FBBF24 80%, #34D399 100%)
+              radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.6) 15%, transparent 45%),
+              radial-gradient(circle at 75% 20%, rgba(165, 243, 252, 0.9) 0%, transparent 40%),
+              radial-gradient(circle at 20% 75%, rgba(244, 114, 182, 0.9) 0%, transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(253, 224, 71, 0.9) 0%, transparent 45%),
+              radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.8) 0%, transparent 55%),
+              conic-gradient(from 180deg at 50% 50%, #67E8F9 0deg, #F472B6 90deg, #FDE047 180deg, #34D399 270deg, #67E8F9 360deg)
             `,
-            backgroundSize: '160% 160%',
+            backgroundSize: '150% 150%',
+            filter: 'contrast(1.15) brightness(1.05)',
           }}
         />
 
-        {/* Dynamic Ripple Waves Overlay */}
+        {/* Liquid Swirl Wave */}
         <div
-          className="absolute inset-0 rounded-full opacity-60 mix-blend-overlay"
+          className="absolute inset-0 rounded-full opacity-70 mix-blend-color-dodge pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at 40% 40%, transparent 20%, rgba(255,255,255,0.8) 45%, transparent 60%)',
-            transform: `scale(${1 + (audioLevel / 300)}) rotate(${audioLevel * 2}deg)`,
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%)',
+            transform: `scale(${1 + audioLevel / 250}) rotate(${audioLevel * 3}deg)`,
             transition: 'transform 0.1s ease-out',
           }}
         />
 
-        {/* 3D Glass Specular Reflection Highlight (Apple-like finish) */}
+        {/* Specular Curved Light Reflection Arc (Realistic Glass Bubble Arc) */}
         <div
-          className="absolute top-1.5 left-3 right-3 h-[45%] rounded-[100%] opacity-80 pointer-events-none"
+          className="absolute top-2 left-4 right-4 h-[42%] rounded-[100%] opacity-90 pointer-events-none"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.05) 100%)',
-            transform: 'rotate(-10deg)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.1) 100%)',
+            transform: 'rotate(-12deg)',
+            filter: 'blur(0.5px)',
           }}
         />
 
-        {/* Ambient Inner Shadow Rim */}
+        {/* Secondary Rim Reflection (Bottom-Right Reflection) */}
+        <div
+          className="absolute bottom-2 right-4 w-1/3 h-1/4 rounded-[100%] opacity-60 pointer-events-none"
+          style={{
+            background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.85) 0%, transparent 100%)',
+            transform: 'rotate(15deg)',
+            filter: 'blur(1px)',
+          }}
+        />
+
+        {/* Inner 3D Sphere Depth Shadow Rim */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
-            boxShadow: 'inset 0 -8px 20px rgba(0, 0, 0, 0.15), inset 0 2px 10px rgba(255, 255, 255, 0.8)',
+            boxShadow: 'inset 0 -12px 28px rgba(30, 27, 75, 0.25), inset 0 2px 12px rgba(255, 255, 255, 0.9)',
           }}
         />
       </div>
 
-      {/* Ground Soft Glow Shadow */}
+      {/* Floating Ground Contact Shadow */}
       <div
-        className="absolute -bottom-3 w-[75%] h-3 rounded-full blur-md opacity-30 pointer-events-none"
+        className="absolute -bottom-4 w-[70%] h-4 rounded-full blur-md opacity-35 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(168, 85, 247, 0.6) 0%, rgba(0,0,0,0) 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(147, 51, 234, 0.6) 0%, rgba(0,0,0,0) 75%)',
         }}
       />
     </div>

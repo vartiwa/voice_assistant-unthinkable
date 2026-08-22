@@ -5,7 +5,9 @@ import { INITIAL_SMART_SUGGESTIONS, SMART_SUBSTITUTES_MAP } from './data/suggest
 import { speechService, SUPPORTED_LANGUAGES } from './services/speechService';
 import { nlpEngine } from './services/nlpService';
 
+import { MobileStatusBar } from './components/MobileStatusBar';
 import { Navbar } from './components/Navbar';
+import { HomeCanvasView } from './components/HomeCanvasView';
 import { VoiceChatStream, ChatMessage } from './components/VoiceChatStream';
 import { BottomFloatingBar } from './components/BottomFloatingBar';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
@@ -14,11 +16,11 @@ import { SuggestionsView } from './components/SuggestionsView';
 import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
 
-const STORAGE_KEY = 'voice_cart_items_v2';
-const CHAT_STORAGE_KEY = 'voice_cart_chat_v2';
+const STORAGE_KEY = 'voice_cart_items_v3';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v3';
 
 export const App: React.FC = () => {
-  // 1. Core Shopping List State
+  // 1. Shopping List State
   const [items, setItems] = useState<ShoppingItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -52,7 +54,7 @@ export const App: React.FC = () => {
     ];
   });
 
-  // 2. Conversational Chat Stream State
+  // 2. Chat Stream Messages State
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -117,7 +119,7 @@ export const App: React.FC = () => {
         intent: parsed.intent,
       });
 
-      // Add to conversational message stream
+      // Add to conversation log
       const userMsg: ChatMessage = {
         id: `user-${Date.now()}`,
         sender: 'user',
@@ -135,6 +137,11 @@ export const App: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
+      // Automatically switch to Voice Chat view if command received
+      if (activeView !== 'voice') {
+        setActiveView('voice');
+      }
 
       // Speak response back to user
       if (!isMuted) {
@@ -233,7 +240,7 @@ export const App: React.FC = () => {
           break;
       }
     },
-    [selectedLanguage, isMuted]
+    [selectedLanguage, isMuted, activeView]
   );
 
   // Continuous speech accumulation refs
@@ -445,8 +452,11 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#F4F3EF] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
       
+      {/* iOS Styled Mobile Status Bar */}
+      <MobileStatusBar />
+
       {/* Top Navbar */}
       <Navbar
         selectedLang={selectedLanguage.speechCode}
@@ -454,7 +464,6 @@ export const App: React.FC = () => {
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onOpenSuggestions={() => setActiveView('suggestions')}
         itemCount={items.length}
         totalPrice={totalPrice}
         isListening={isListening}
@@ -464,22 +473,35 @@ export const App: React.FC = () => {
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Main Container */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 w-full flex-1">
+      {/* Main Content Area */}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-4 w-full flex-1">
         
         {/* Dynamic Views */}
         {activeView === 'voice' && (
-          <VoiceChatStream
-            messages={messages}
-            liveTranscript={liveTranscript}
-            isListening={isListening}
-            onQuickPrompt={executeCommand}
-            onOpenCatalog={() => {
-              setSearchQuery('');
-              setSearchMaxPrice(undefined);
-              setIsSearchOpen(true);
-            }}
-          />
+          messages.length <= 1 ? (
+            <HomeCanvasView
+              onQuickPrompt={executeCommand}
+              onOpenImmersiveVoice={() => setIsImmersiveOpen(true)}
+              onOpenCatalog={() => {
+                setSearchQuery('');
+                setSearchMaxPrice(undefined);
+                setIsSearchOpen(true);
+              }}
+              onOpenCart={() => setActiveView('cart')}
+              itemCount={items.length}
+              totalPrice={totalPrice}
+              isListening={isListening}
+              audioLevel={audioLevel}
+            />
+          ) : (
+            <VoiceChatStream
+              messages={messages}
+              liveTranscript={liveTranscript}
+              isListening={isListening}
+              onQuickPrompt={executeCommand}
+              onOpenCart={() => setActiveView('cart')}
+            />
+          )
         )}
 
         {activeView === 'cart' && (
@@ -511,7 +533,7 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Bottom Floating Pill Bar with Orange Glowing Mic matching inspiration */}
+      {/* Bottom Floating Pill Bar with Language Selector & Orange Glowing Mic */}
       <BottomFloatingBar
         isListening={isListening}
         onToggleListen={toggleListening}
@@ -523,11 +545,12 @@ export const App: React.FC = () => {
         }}
         onExecuteCommand={executeCommand}
         selectedLang={selectedLanguage}
-        onToggleLanguage={() => {}}
+        onLanguageChange={handleLanguageChange}
         isHandsFree={isHandsFree}
+        onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Immersive 3D Iridescent Voice Screen Overlay */}
+      {/* Immersive 3D Iridescent Voice Screen Overlay matching Screen 3 */}
       <ImmersiveVoiceOverlay
         isOpen={isImmersiveOpen}
         onClose={() => setIsImmersiveOpen(false)}
@@ -541,7 +564,7 @@ export const App: React.FC = () => {
         onToggleMute={handleToggleMute}
       />
 
-      {/* Voice-Activated Search Modal */}
+      {/* Product Catalog Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
