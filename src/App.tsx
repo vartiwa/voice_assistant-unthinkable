@@ -5,19 +5,19 @@ import { INITIAL_SMART_SUGGESTIONS, SMART_SUBSTITUTES_MAP } from './data/suggest
 import { speechService, SUPPORTED_LANGUAGES } from './services/speechService';
 import { nlpEngine } from './services/nlpService';
 
-import { MobileStatusBar } from './components/MobileStatusBar';
 import { Navbar } from './components/Navbar';
-import { HomeCanvasView } from './components/HomeCanvasView';
-import { VoiceChatStream, ChatMessage } from './components/VoiceChatStream';
+import { DesktopMainStage } from './components/DesktopMainStage';
+import { ChatMessage } from './components/VoiceChatStream';
 import { BottomFloatingBar } from './components/BottomFloatingBar';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
 import { ShoppingListView } from './components/ShoppingListView';
 import { SuggestionsView } from './components/SuggestionsView';
 import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
+import { ShoppingBag, Sparkles } from 'lucide-react';
 
-const STORAGE_KEY = 'voice_cart_items_v3';
-const CHAT_STORAGE_KEY = 'voice_cart_chat_v3';
+const STORAGE_KEY = 'voice_cart_items_v4';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v4';
 
 export const App: React.FC = () => {
   // 1. Shopping List State
@@ -51,6 +51,17 @@ export const App: React.FC = () => {
         completed: false,
         addedAt: new Date().toISOString(),
       },
+      {
+        id: 'init-3',
+        name: 'Wireless Bluetooth Earphones',
+        category: 'Electronics',
+        quantity: 1,
+        unit: 'pair',
+        price: 29.99,
+        brand: 'Sony',
+        completed: false,
+        addedAt: new Date().toISOString(),
+      },
     ];
   });
 
@@ -64,7 +75,7 @@ export const App: React.FC = () => {
       {
         id: 'msg-1',
         sender: 'assistant',
-        text: 'Hello! I am VoiceCart AI. Speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
+        text: 'Hello! I am VoiceCart AI. You can speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
         timestamp: 'Just now',
       },
     ];
@@ -88,7 +99,7 @@ export const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
 
   // 5. Views & Modals State
-  const [activeView, setActiveView] = useState<'voice' | 'cart' | 'suggestions'>('voice');
+  const [activeView, setActiveView] = useState<'chat' | 'cart' | 'suggestions'>('chat');
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,7 +116,7 @@ export const App: React.FC = () => {
   // Persist chat
   useEffect(() => {
     try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-15)));
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-20)));
     } catch (e) {}
   }, [messages]);
 
@@ -119,7 +130,7 @@ export const App: React.FC = () => {
         intent: parsed.intent,
       });
 
-      // Add to conversation log
+      // Add to conversation stream
       const userMsg: ChatMessage = {
         id: `user-${Date.now()}`,
         sender: 'user',
@@ -137,11 +148,6 @@ export const App: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
-
-      // Automatically switch to Voice Chat view if command received
-      if (activeView !== 'voice') {
-        setActiveView('voice');
-      }
 
       // Speak response back to user
       if (!isMuted) {
@@ -240,7 +246,7 @@ export const App: React.FC = () => {
           break;
       }
     },
-    [selectedLanguage, isMuted, activeView]
+    [selectedLanguage, isMuted]
   );
 
   // Continuous speech accumulation refs
@@ -452,11 +458,8 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F4F3EF] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#F7F6F3] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
       
-      {/* iOS Styled Mobile Status Bar */}
-      <MobileStatusBar />
-
       {/* Top Navbar */}
       <Navbar
         selectedLang={selectedLanguage.speechCode}
@@ -473,67 +476,88 @@ export const App: React.FC = () => {
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Main Content Area */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-4 w-full flex-1">
+      {/* Main Desktop Workspace Layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
         
-        {/* Dynamic Views */}
-        {activeView === 'voice' && (
-          messages.length <= 1 ? (
-            <HomeCanvasView
-              onQuickPrompt={executeCommand}
-              onOpenImmersiveVoice={() => setIsImmersiveOpen(true)}
-              onOpenCatalog={() => {
-                setSearchQuery('');
-                setSearchMaxPrice(undefined);
-                setIsSearchOpen(true);
-              }}
-              onOpenCart={() => setActiveView('cart')}
-              itemCount={items.length}
-              totalPrice={totalPrice}
-              isListening={isListening}
-              audioLevel={audioLevel}
-            />
-          ) : (
-            <VoiceChatStream
+        {/* Desktop Split View: Wide Main Stage on Left, Live Shopping Cart & Suggestions on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Main Stage / Voice Chat Column (Takes 7 or 8 cols on laptop) */}
+          <div className="lg:col-span-7 xl:col-span-8">
+            <DesktopMainStage
               messages={messages}
               liveTranscript={liveTranscript}
               isListening={isListening}
+              audioLevel={audioLevel}
+              onToggleListen={toggleListening}
               onQuickPrompt={executeCommand}
               onOpenCart={() => setActiveView('cart')}
+              isHandsFree={isHandsFree}
             />
-          )
-        )}
+          </div>
 
-        {activeView === 'cart' && (
-          <ShoppingListView
-            items={items}
-            onToggleComplete={handleToggleComplete}
-            onUpdateQuantity={handleUpdateQuantity}
-            onDeleteItem={handleDeleteItem}
-            onApplySubstitute={handleApplySubstitute}
-            onClearList={handleClearList}
-            onQuickAddItem={(name, category, price) => {
-              handleAddCustomItem({
-                name,
-                category,
-                quantity: 1,
-                unit: 'item',
-                price,
-              });
-            }}
-          />
-        )}
+          {/* Right Panel Column (Takes 5 or 4 cols on laptop - always accessible!) */}
+          <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-6">
+            
+            {/* Tab Pill to switch between Cart & Suggestions on Desktop */}
+            <div className="flex items-center p-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm text-xs font-bold">
+              <button
+                onClick={() => setActiveView('cart')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full transition-all ${
+                  activeView === 'cart' || activeView === 'chat'
+                    ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>Live Cart ({items.length})</span>
+              </button>
 
-        {activeView === 'suggestions' && (
-          <SuggestionsView
-            suggestions={suggestions}
-            onAddSuggestion={handleAddSuggestion}
-            addedSuggestionIds={addedSuggestionIds}
-          />
-        )}
+              <button
+                onClick={() => setActiveView('suggestions')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full transition-all ${
+                  activeView === 'suggestions'
+                    ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Smart Suggestions</span>
+              </button>
+            </div>
+
+            {/* Content Display based on active right tab */}
+            {activeView === 'suggestions' ? (
+              <SuggestionsView
+                suggestions={suggestions}
+                onAddSuggestion={handleAddSuggestion}
+                addedSuggestionIds={addedSuggestionIds}
+              />
+            ) : (
+              <ShoppingListView
+                items={items}
+                onToggleComplete={handleToggleComplete}
+                onUpdateQuantity={handleUpdateQuantity}
+                onDeleteItem={handleDeleteItem}
+                onApplySubstitute={handleApplySubstitute}
+                onClearList={handleClearList}
+                onQuickAddItem={(name, category, price) => {
+                  handleAddCustomItem({
+                    name,
+                    category,
+                    quantity: 1,
+                    unit: 'item',
+                    price,
+                  });
+                }}
+              />
+            )}
+          </div>
+
+        </div>
       </main>
 
-      {/* Bottom Floating Pill Bar with Language Selector & Orange Glowing Mic */}
+      {/* Bottom Floating Command Bar (Desktop Pill) */}
       <BottomFloatingBar
         isListening={isListening}
         onToggleListen={toggleListening}
@@ -550,7 +574,7 @@ export const App: React.FC = () => {
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Immersive 3D Iridescent Voice Screen Overlay matching Screen 3 */}
+      {/* Immersive 3D Iridescent Fullscreen Overlay */}
       <ImmersiveVoiceOverlay
         isOpen={isImmersiveOpen}
         onClose={() => setIsImmersiveOpen(false)}
