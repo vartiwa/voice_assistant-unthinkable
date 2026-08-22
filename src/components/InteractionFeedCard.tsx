@@ -62,6 +62,20 @@ export const InteractionFeedCard: React.FC<InteractionFeedCardProps> = ({
 
               <p>{msg.text}</p>
 
+              {/* NLU Diagnostics & Confidence Tag */}
+              {msg.sender === 'assistant' && msg.intent && (
+                <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    {msg.intent}
+                  </span>
+                  {msg.confidenceScore && (
+                    <span className="text-[9.5px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {Math.round(msg.confidenceScore * 100)}% Confidence
+                    </span>
+                  )}
+                </div>
+              )}
+
               {msg.itemDetails?.name && (
                 <div className="mt-2 pt-2 border-t border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between gap-2 text-[11px]">
                   <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">

@@ -87,6 +87,7 @@ export interface ParsedVoiceCommand {
   items?: ExtractedItemDetail[]; // Multi-item additions support
   searchQuery?: string;
   priceFilter?: number;
+  confidenceScore?: number; // 0.0 to 1.0 NLU match confidence
   feedbackMessage: string;
   success: boolean;
 }

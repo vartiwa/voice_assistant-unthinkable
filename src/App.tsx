@@ -149,9 +149,15 @@ export const App: React.FC = () => {
         timestamp: 'Just now',
         itemDetails: parsed.itemDetails,
         intent: parsed.intent,
+        confidenceScore: parsed.confidenceScore,
       };
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
+      // Play soft harmonic earcon chime on intent match
+      if (parsed.intent !== 'UNKNOWN') {
+        speechService.playEarcon('success');
+      }
 
       if (!isMuted) {
         speechService.speak(parsed.feedbackMessage, selectedLanguage.speechCode);
@@ -266,6 +272,7 @@ export const App: React.FC = () => {
   const startListeningSession = useCallback(() => {
     latestTranscriptRef.current = '';
     setLiveTranscript('');
+    speechService.playEarcon('listen');
     speechService.startListening({
       onStart: () => setIsListening(true),
       onEnd: () => {
@@ -308,6 +315,7 @@ export const App: React.FC = () => {
       }
       const pendingText = latestTranscriptRef.current.trim();
       speechService.stopListening();
+      speechService.playEarcon('cancel');
       setIsListening(false);
       setLiveTranscript('');
       setAudioLevel(0);

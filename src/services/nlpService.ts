@@ -90,46 +90,6 @@ const NUMBER_WORDS: Record<string, number> = {
   pathu: 10,
   arai: 0.5,
   kaal: 0.25,
-
-  // Spanish
-  un: 1,
-  una: 1,
-  uno: 1,
-  dos: 2,
-  tres: 3,
-  cuatro: 4,
-  cinco: 5,
-  seis: 6,
-  siete: 7,
-  ocho: 8,
-  nueve: 9,
-  diez: 10,
-  docena: 12,
-
-  // French
-  deux: 2,
-  trois: 3,
-  quatre: 4,
-  cinq: 5,
-  sept: 7,
-  huit: 8,
-  neuf: 9,
-  dix: 10,
-
-  // German
-  ein: 1,
-  eine: 1,
-  einen: 1,
-  eins: 1,
-  zwei: 2,
-  drei: 3,
-  vier: 4,
-  fünf: 5,
-  sechs: 6,
-  sieben: 7,
-  acht: 8,
-  neun: 9,
-  zehn: 10,
 };
 
 const COMMON_UNITS = [
@@ -158,142 +118,218 @@ const COMMON_UNITS = [
   'kgs',
   'kilo',
   'kilos',
-  'kilogram',
-  'kilograms',
   'gram',
   'grams',
-  'gm',
-  'gms',
   'g',
   'litre',
   'litres',
   'liter',
   'liters',
-  'ltr',
-  'ltrs',
-  'can',
-  'cans',
-  'jar',
-  'jars',
-  'item',
-  'items',
-  'pair',
-  'pairs',
-  'tube',
-  'tubes',
-  'dozen',
-  'darjan',
+  'l',
   'bunch',
   'bunches',
-  'kattu',
-  // Multilingual Indian units
-  'किलो',
-  'ग्राम',
-  'लीटर',
-  'पैकेट',
-  'डब्बा',
-  'கிலோ',
-  'கிராம்',
-  'லிட்டர்',
-  'பாக்கெட்',
-  'கட்டு',
-  // European units
-  'botella',
-  'botellas',
-  'bolsa',
-  'bolsas',
-  'paquete',
-  'paquetes',
-  'paquet',
-  'bouteille',
-  'bouteilles',
-  'flasche',
-  'flaschen',
+  'piece',
+  'pieces',
+  'pair',
+  'pairs',
+  'item',
+  'items',
+  'can',
+  'cans',
+  'tin',
+  'tins',
 ];
 
-// Helper to infer category with whole-word regex matching
-export const inferCategory = (itemName: string): Category => {
-  const lower = itemName.toLowerCase().trim();
-  if (!lower) return 'Other';
+// Jaro-Winkler String Distance Metric (0.0 to 1.0)
+export function jaroWinklerSimilarity(s1: string, s2: string): number {
+  const str1 = s1.toLowerCase().trim();
+  const str2 = s2.toLowerCase().trim();
+  if (str1 === str2) return 1.0;
+  if (!str1 || !str2) return 0.0;
 
-  // 1. Whole-word boundary match in CATEGORY_MAP
-  for (const [key, category] of Object.entries(CATEGORY_MAP)) {
-    const regex = new RegExp(`(^|\\s|[^a-zA-Z0-9])${key}($|\\s|[^a-zA-Z0-9])`, 'i');
-    if (regex.test(lower)) {
+  const matchDistance = Math.floor(Math.max(str1.length, str2.length) / 2) - 1;
+  const s1Matches = new Array(str1.length).fill(false);
+  const s2Matches = new Array(str2.length).fill(false);
+
+  let matches = 0;
+  for (let i = 0; i < str1.length; i++) {
+    const start = Math.max(0, i - matchDistance);
+    const end = Math.min(i + matchDistance + 1, str2.length);
+    for (let j = start; j < end; j++) {
+      if (s2Matches[j] || str1[i] !== str2[j]) continue;
+      s1Matches[i] = true;
+      s2Matches[j] = true;
+      matches++;
+      break;
+    }
+  }
+
+  if (matches === 0) return 0.0;
+
+  let transpositions = 0;
+  let k = 0;
+  for (let i = 0; i < str1.length; i++) {
+    if (!s1Matches[i]) continue;
+    while (!s2Matches[k]) k++;
+    if (str1[i] !== str2[k]) transpositions++;
+    k++;
+  }
+
+  const jaro = (matches / str1.length + matches / str2.length + (matches - transpositions / 2) / matches) / 3;
+
+  let prefix = 0;
+  for (let i = 0; i < Math.min(4, str1.length, str2.length); i++) {
+    if (str1[i] === str2[i]) prefix++;
+    else break;
+  }
+
+  return jaro + prefix * 0.1 * (1 - jaro);
+}
+
+// Soundex Phonetic Code Generator for Spoken Grocery Words
+export function getSoundexCode(word: string): string {
+  const clean = word.toUpperCase().replace(/[^A-Z]/g, '');
+  if (!clean) return '0000';
+
+  const soundexMap: Record<string, string> = {
+    B: '1', F: '1', P: '1', V: '1',
+    C: '2', G: '2', J: '2', K: '2', Q: '2', S: '2', X: '2', Z: '2',
+    D: '3', T: '3',
+    L: '4',
+    M: '5', N: '5',
+    R: '6',
+  };
+
+  let code = clean[0];
+  let prev = soundexMap[clean[0]] || '0';
+
+  for (let i = 1; i < clean.length && code.length < 4; i++) {
+    const curr = soundexMap[clean[i]] || '0';
+    if (curr !== '0' && curr !== prev) {
+      code += curr;
+    }
+    prev = curr;
+  }
+
+  return code.padEnd(4, '0');
+}
+
+// Category Inferencing with Multilingual Dictionary
+export const inferCategory = (name: string): Category => {
+  const lower = name.toLowerCase().trim();
+
+  // Check direct category map keywords
+  for (const [keyword, category] of Object.entries(CATEGORY_MAP)) {
+    if (lower.includes(keyword)) {
       return category;
     }
   }
 
-  // 2. Check catalog for exact or substring product names
-  const matchedCatalog = PRODUCT_CATALOG.find((p) => {
-    const pName = p.name.toLowerCase();
-    return pName === lower || pName.includes(lower) || lower.includes(pName);
-  });
-
-  if (matchedCatalog) {
-    return matchedCatalog.category;
+  // Heuristic fallbacks
+  if (/\b(apple|banana|tomato|onion|potato|avocado|spinach|berry|berries|grape|lemon|lime|garlic|ginger|carrot|lettuce|cucumber|mango|orange|thakkali|vengayam|seb|kela|aalu|tamatar|keerai)\b/i.test(lower)) {
+    return 'Produce';
   }
-
-  // 3. Fallback keyword checks
-  if (/\b(earphones?|headphones?|earbuds?|airpods?|charger|cable|battery|batteries|mouse|keyboard|phone|laptop|headset)\b/i.test(lower)) {
+  if (/\b(milk|cheese|paneer|butter|yogurt|curd|doodh|dahi|makhan|cream|egg|eggs|muttai|anda|ande)\b/i.test(lower)) {
+    return 'Dairy & Eggs';
+  }
+  if (/\b(bread|bagel|croissant|muffin|bun|loaf|sourdough|cake|cookie|roti|pav|naan)\b/i.test(lower)) {
+    return 'Bakery';
+  }
+  if (/\b(earphone|headphone|earbud|airpod|cable|charger|battery|plug|adapter|sony|apple|samsung|bose)\b/i.test(lower)) {
     return 'Electronics';
+  }
+  if (/\b(chicken|fish|meat|mutton|beef|prawn|salmon|tuna|pork|meen|kozhi)\b/i.test(lower)) {
+    return 'Meat & Seafood';
+  }
+  if (/\b(atta|flour|rice|dal|daal|sugar|salt|oil|pasta|noodle|spice|masala|sauce|cereal|oats|arisi|paruppu)\b/i.test(lower)) {
+    return 'Pantry';
+  }
+  if (/\b(water|soda|coke|pepsi|juice|tea|coffee|chai|kaapi|drink|beer|wine)\b/i.test(lower)) {
+    return 'Beverages';
+  }
+  if (/\b(soap|shampoo|toothpaste|brush|paste|lotion|tissue|paper|detergent|cleaner)\b/i.test(lower)) {
+    return 'Personal Care';
   }
 
   return 'Other';
 };
 
-// Helper to determine default price and unit without corrupting item name
+// Hybrid Catalog Matching & Defaults
 export const inferProductDefaults = (
-  itemName: string
-): { price: number; unit: string; brand?: string; isOrganic?: boolean; fullName?: string } => {
-  const lower = itemName.toLowerCase().trim();
+  name: string
+): {
+  price: number;
+  unit: string;
+  brand?: string;
+  isOrganic?: boolean;
+  fullName?: string;
+  matchedId?: string;
+  confidence: number;
+} => {
+  const lower = name.toLowerCase().trim();
+  const inputSoundex = getSoundexCode(lower.split(/\s+/)[0] || lower);
 
-  // Check catalog for close product matches
-  const matched = PRODUCT_CATALOG.find((p) => {
-    const pLower = p.name.toLowerCase();
-    return pLower === lower || pLower.includes(lower) || lower.includes(pLower);
-  });
+  let bestMatch: (typeof PRODUCT_CATALOG)[0] | null = null;
+  let highestScore = 0;
 
-  if (matched) {
+  // 1. Check exact catalog list via Jaro-Winkler + Soundex
+  for (const product of PRODUCT_CATALOG) {
+    const prodLower = product.name.toLowerCase();
+    const prodSoundex = getSoundexCode(prodLower.split(/\s+/)[0] || prodLower);
+
+    let score = jaroWinklerSimilarity(lower, prodLower);
+
+    // Phonetic soundex bonus
+    if (inputSoundex === prodSoundex) {
+      score += 0.12;
+    }
+
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = product;
+    }
+  }
+
+  if (bestMatch && highestScore >= 0.72) {
     return {
-      price: matched.price,
-      unit: matched.unit,
-      brand: matched.brand,
-      isOrganic: matched.isOrganic,
-      fullName: matched.name,
+      price: bestMatch.price,
+      unit: bestMatch.unit,
+      brand: bestMatch.brand,
+      isOrganic: bestMatch.isOrganic,
+      fullName: bestMatch.name,
+      matchedId: bestMatch.id,
+      confidence: Math.min(1.0, highestScore),
     };
   }
 
-  // Smart defaults based on category
-  const cat = inferCategory(itemName);
-  switch (cat) {
-    case 'Produce':
-      return { price: 2.99, unit: 'lb' };
-    case 'Dairy & Eggs':
-      return { price: 3.49, unit: 'item' };
-    case 'Bakery':
-      return { price: 3.29, unit: 'pack' };
-    case 'Electronics':
-      return { price: 24.99, unit: 'pair' };
-    case 'Meat & Seafood':
-      return { price: 8.99, unit: 'lb' };
-    case 'Beverages':
-      return { price: 2.49, unit: 'bottle' };
-    case 'Snacks':
-      return { price: 3.99, unit: 'pack' };
-    case 'Pantry':
-      return { price: 4.29, unit: 'pack' };
-    case 'Household':
-      return { price: 5.99, unit: 'item' };
-    case 'Personal Care':
-      return { price: 4.49, unit: 'tube' };
-    default:
-      return { price: 3.99, unit: 'item' };
-  }
+  // 2. Fallback heuristic pricing based on category
+  const cat = inferCategory(lower);
+  const fallbackPrices: Record<Category, { price: number; unit: string }> = {
+    'Produce': { price: 2.99, unit: 'lb' },
+    'Dairy & Eggs': { price: 4.49, unit: 'pack' },
+    'Bakery': { price: 3.89, unit: 'loaf' },
+    'Meat & Seafood': { price: 8.99, unit: 'lb' },
+    'Electronics': { price: 29.99, unit: 'pair' },
+    'Beverages': { price: 2.49, unit: 'bottle' },
+    'Snacks': { price: 3.49, unit: 'pack' },
+    'Pantry': { price: 4.29, unit: 'pack' },
+    'Household': { price: 5.99, unit: 'item' },
+    'Personal Care': { price: 4.49, unit: 'tube' },
+    'Frozen': { price: 4.99, unit: 'pack' },
+    'Other': { price: 3.49, unit: 'item' },
+  };
+
+  const def = fallbackPrices[cat] || { price: 3.49, unit: 'item' };
+
+  return {
+    price: def.price,
+    unit: def.unit,
+    confidence: 0.65,
+  };
 };
 
 export class NLPEngine {
-  // Extract quantity and unit with support for Indian, Tamil, and English accents
+  // Extract quantity, unit, and clean name from raw speech
   public extractQuantityAndUnit(
     rawText: string
   ): { quantity: number; unit: string; cleanedName: string } {
@@ -344,7 +380,6 @@ export class NLPEngine {
 
     if (COMMON_UNITS.includes(potentialUnit) || COMMON_UNITS.includes(cleanUnit)) {
       unit = potentialUnit;
-      // Strip "of" / "ka" / "kooda"
       const remaining = unitTokens.slice(1);
       if (remaining[0]?.toLowerCase() === 'of' || remaining[0]?.toLowerCase() === 'ka' || remaining[0]?.toLowerCase() === 'kooda') {
         text = remaining.slice(1).join(' ');
@@ -396,6 +431,7 @@ export class NLPEngine {
       return {
         intent: 'UNKNOWN',
         rawText: '',
+        confidenceScore: 0.0,
         feedbackMessage: "I didn't catch that. Please speak your command or say 'Help'.",
         success: false,
       };
@@ -403,8 +439,8 @@ export class NLPEngine {
 
     // Comprehensive Wake Word Detection with phonetic mis-hearings & "hey add to cart"
     const wakeWordMatches = [
-      /^(?:hey|ok|okay|hello|namaste|vanakkam|hi|oye|listen|yo)\s+(?:assistant|assistent|asistant|acistant|assistance|assistence|assist|cart|add\s+to\s+cart|google|voice\s*cart|voicecart)[,\s]*/i,
-      /^(?:voice\s*cart|voicecart|assistant|assistent|asistant|acistant|assistance|assistence|shopping assistant|hey\s+add\s+to\s+cart|add\s+to\s+cart|put\s+in\s+cart|cart\s+mein\s+daalo)[,\s]*/i,
+      /^(?:hey|ok|okay|hello|namaste|vanakkam|hi|oye|listen|yo)\s+(?:assistant|assistent|asistant|acistant|assistance|assistence|assist|cart|add\s+to\s+cart|google|voice\s*cart|voicecart|v-cart|vcart)[,\s]*/i,
+      /^(?:voice\s*cart|voicecart|v-cart|vcart|assistant|assistent|asistant|acistant|assistance|assistence|shopping assistant|hey\s+add\s+to\s+cart|add\s+to\s+cart|put\s+in\s+cart|cart\s+mein\s+daalo)[,\s]*/i,
     ];
 
     let cleanedText = text;
@@ -418,11 +454,12 @@ export class NLPEngine {
       }
     }
 
-    // If user ONLY said the wake word ("Hey Assistant", "Hey Assistance", "Hey add to cart", etc.)
+    // If user ONLY said the wake word
     if (hadWakeWord && !cleanedText) {
       return {
         intent: 'WAKE_GREETING',
         rawText: text,
+        confidenceScore: 0.99,
         feedbackMessage: "Yes, I'm listening! Tell me what to add to your list.",
         success: true,
       };
@@ -430,7 +467,7 @@ export class NLPEngine {
 
     const lower = (cleanedText || text).toLowerCase().trim();
 
-    // 1. HELP COMMANDS (English, Hindi, Tamil)
+    // 1. HELP COMMANDS
     if (
       lower.includes('help') ||
       lower.includes('what can i say') ||
@@ -442,12 +479,13 @@ export class NLPEngine {
       return {
         intent: 'HELP',
         rawText: text,
+        confidenceScore: 0.98,
         feedbackMessage: 'Here are the available voice commands you can use.',
         success: true,
       };
     }
 
-    // 2. SUGGESTIONS & REORDERS (English, Hindi, Tamil)
+    // 2. SUGGESTIONS & REORDERS
     if (
       lower.includes('suggest') ||
       lower.includes('recommend') ||
@@ -463,6 +501,7 @@ export class NLPEngine {
       return {
         intent: 'SHOW_SUGGESTIONS',
         rawText: text,
+        confidenceScore: 0.95,
         feedbackMessage: 'Showing smart suggestions for routine reorders, in-season produce, and weekly deals.',
         success: true,
       };
@@ -480,12 +519,13 @@ export class NLPEngine {
       return {
         intent: 'CLEAR_LIST',
         rawText: text,
+        confidenceScore: 0.97,
         feedbackMessage: 'Cleared all items from your shopping list.',
         success: true,
       };
     }
 
-    // 4. PRICE FILTER COMMANDS (Handles ₹, Rupees, Rs, INR, $, Dollars)
+    // 4. PRICE FILTER COMMANDS
     const priceMatch = lower.match(
       /(?:under|below|less than|max|cheaper than|under ₹|under \$|se kam|kulla|kamti)\s*(?:₹|\$|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:dollars?|bucks?|\$|rupees?|rs|inr|₹)?/i
     );
@@ -513,6 +553,7 @@ export class NLPEngine {
           rawText: text,
           searchQuery: cleanQuery,
           priceFilter: maxPrice,
+          confidenceScore: 0.94,
           feedbackMessage: `Filtering items ${cleanQuery ? `for "${cleanQuery}"` : ''} under $${maxPrice.toFixed(2)}.`,
           success: true,
         };
@@ -528,6 +569,7 @@ export class NLPEngine {
           intent: 'SEARCH_ITEMS',
           rawText: text,
           searchQuery: cleanQuery,
+          confidenceScore: 0.92,
           feedbackMessage: `Searching catalog for "${cleanQuery}".`,
           success: true,
         };
@@ -563,6 +605,7 @@ export class NLPEngine {
       return {
         intent: 'REMOVE_ITEM',
         rawText: text,
+        confidenceScore: 0.93,
         itemDetails: {
           name: finalName,
           category,
@@ -603,6 +646,7 @@ export class NLPEngine {
         return {
           intent: 'ADD_ITEM',
           rawText: text,
+          confidenceScore: 0.96,
           items: extractedList,
           itemDetails: extractedList[0],
           feedbackMessage: `Added ${itemNames} to your cart.`,
@@ -617,6 +661,7 @@ export class NLPEngine {
       return {
         intent: 'ADD_ITEM',
         rawText: text,
+        confidenceScore: 0.94,
         items: [singleItem],
         itemDetails: singleItem,
         feedbackMessage: `Added ${singleItem.quantity} ${singleItem.unit !== 'item' ? singleItem.unit + ' of ' : ''}${singleItem.name} to ${singleItem.category || 'your cart'}.`,
@@ -642,6 +687,7 @@ export class NLPEngine {
     return {
       intent: 'ADD_ITEM',
       rawText: text,
+      confidenceScore: defaults.confidence,
       items: [fallbackDetail],
       itemDetails: fallbackDetail,
       feedbackMessage: `Added ${displayName} to ${category}.`,

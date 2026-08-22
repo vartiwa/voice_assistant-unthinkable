@@ -10,6 +10,7 @@ export interface ChatMessage {
   timestamp: string;
   itemDetails?: Partial<ShoppingItem>;
   intent?: string;
+  confidenceScore?: number;
 }
 
 interface VoiceChatStreamProps {

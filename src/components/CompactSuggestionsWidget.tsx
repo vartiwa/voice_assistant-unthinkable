@@ -19,7 +19,7 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-3.5 h-full flex flex-col justify-between">
       
-      {/* Top Header matching Sketch */}
+      {/* Top Header */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -63,6 +63,7 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => onAddSuggestion(sug)}
                   disabled={isAdded}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 transition-all ${
@@ -110,6 +111,7 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => onAddSuggestion(sug)}
                   disabled={isAdded}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 transition-all ${
@@ -128,4 +130,4 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
 
     </div>
   );
-};
+}
