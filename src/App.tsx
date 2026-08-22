@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { ShoppingItem, SmartSuggestion, LanguageOption } from './types';
 import { INITIAL_SMART_SUGGESTIONS, SMART_SUBSTITUTES_MAP } from './data/suggestionsData';
@@ -195,14 +195,27 @@ export const App: React.FC = () => {
     [selectedLanguage, isMuted]
   );
 
+  // Refs for continuous speech accumulation and silence debounce
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const latestTranscriptRef = useRef<string>('');
+
   // Toggle Voice Recognition
   const toggleListening = () => {
     if (isListening) {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+      const pendingText = latestTranscriptRef.current.trim();
       speechService.stopListening();
       setIsListening(false);
       setLiveTranscript('');
       setAudioLevel(0);
+      if (pendingText) {
+        executeCommand(pendingText);
+      }
     } else {
+      latestTranscriptRef.current = '';
       setLiveTranscript('');
       speechService.startListening({
         onStart: () => setIsListening(true),
@@ -214,17 +227,43 @@ export const App: React.FC = () => {
           setIsListening(false);
           setLastFeedback({ message: err, success: false });
         },
-        onResult: (transcript, isFinal) => {
+        onResult: (transcript) => {
+          latestTranscriptRef.current = transcript;
           setLiveTranscript(transcript);
-          if (isFinal) {
-            executeCommand(transcript);
-            setTimeout(() => {
-              setLiveTranscript('');
-            }, 2000);
+
+          // Reset silence timer on every new word
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
           }
+
+          // Wait 1.8s of silence after speech ends before auto-processing
+          silenceTimerRef.current = setTimeout(() => {
+            const finalCmd = latestTranscriptRef.current.trim();
+            if (finalCmd) {
+              speechService.stopListening();
+              setIsListening(false);
+              setLiveTranscript('');
+              executeCommand(finalCmd);
+            }
+          }, 1800);
         },
         onAudioLevel: (level) => setAudioLevel(level),
       });
+    }
+  };
+
+  // Immediate dispatch when user clicks Done button
+  const handleForceProcessNow = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    const finalCmd = latestTranscriptRef.current.trim();
+    speechService.stopListening();
+    setIsListening(false);
+    setLiveTranscript('');
+    if (finalCmd) {
+      executeCommand(finalCmd);
     }
   };
 
@@ -363,6 +402,7 @@ export const App: React.FC = () => {
           audioLevel={audioLevel}
           onExecuteCommand={executeCommand}
           selectedLangCode={selectedLanguage.speechCode}
+          onForceProcessNow={handleForceProcessNow}
         />
 
         {/* View Switcher Tabs (Shopping List vs Smart Suggestions) */}

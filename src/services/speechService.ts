@@ -34,6 +34,7 @@ class SpeechService {
   private animFrameId: number | null = null;
   private ttsMuted: boolean = false;
   private isSpeakingTTS: boolean = false;
+  private activeHandlers: SpeechRecognitionHandlers | null = null;
 
   constructor() {
     this.initRecognition();
@@ -47,7 +48,8 @@ class SpeechService {
 
     if (SpeechRecognitionAPI) {
       this.recognition = new SpeechRecognitionAPI();
-      this.recognition.continuous = false; // Set to false to avoid picking up TTS echo and lingering noise
+      // Continuous = true allows complete sentences without early cutoffs
+      this.recognition.continuous = true;
       this.recognition.interimResults = true;
       this.recognition.maxAlternatives = 1;
       this.recognition.lang = this.currentLanguage;
@@ -74,9 +76,10 @@ class SpeechService {
 
   public startListening(handlers: SpeechRecognitionHandlers) {
     if (this.isSpeakingTTS) {
-      // Don't listen while TTS is speaking to prevent acoustic feedback loop
       return;
     }
+
+    this.activeHandlers = handlers;
 
     if (!this.recognition) {
       this.initRecognition();
@@ -98,45 +101,61 @@ class SpeechService {
     };
 
     this.recognition.onresult = (event: any) => {
-      // If TTS is currently speaking, ignore audio to avoid feedback loop
       if (this.isSpeakingTTS) return;
 
-      let interimTranscript = '';
-      let finalTranscript = '';
+      let fullTranscript = '';
+      let hasFinal = false;
 
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const item = event.results[i];
-        if (item.isFinal) {
-          finalTranscript += item[0].transcript;
-        } else {
-          interimTranscript += item[0].transcript;
+      // Accumulate entire sentence across all results
+      for (let i = 0; i < event.results.length; ++i) {
+        const res = event.results[i];
+        fullTranscript += res[0].transcript + ' ';
+        if (res.isFinal) {
+          hasFinal = true;
         }
       }
 
-      if (finalTranscript.trim()) {
-        handlers.onResult(finalTranscript.trim(), true);
-      } else if (interimTranscript.trim()) {
-        handlers.onResult(interimTranscript.trim(), false);
+      const clean = fullTranscript.trim();
+      if (clean) {
+        handlers.onResult(clean, hasFinal);
       }
     };
 
     this.recognition.onerror = (event: any) => {
-      let msg = 'Speech recognition error occurred';
+      if (event.error === 'no-speech') {
+        // Natural pause - do not abort or disconnect
+        return;
+      }
+      if (event.error === 'aborted') {
+        return;
+      }
+
+      let msg = 'Speech recognition error';
       if (event.error === 'not-allowed') {
-        msg = 'Microphone access was denied. Please allow microphone permission in your browser URL bar.';
-      } else if (event.error === 'no-speech') {
-        msg = 'No speech detected. Please speak clearly into your mic.';
+        msg = 'Microphone access denied. Please allow microphone permission in your browser URL bar.';
       } else if (event.error === 'network') {
         msg = 'Network connection issue with speech service.';
       }
+
       this.isListening = false;
       this.stopAudioVisualizer();
       handlers.onError(msg);
     };
 
     this.recognition.onend = () => {
-      this.isListening = false;
       this.stopAudioVisualizer();
+
+      // If user is still marked as listening and TTS is not active, auto-restart to prevent unexpected dropouts
+      if (this.isListening && !this.isSpeakingTTS && this.activeHandlers) {
+        try {
+          this.recognition.start();
+          return;
+        } catch (e) {
+          // Ignore if already starting
+        }
+      }
+
+      this.isListening = false;
       handlers.onEnd();
     };
 
@@ -149,14 +168,15 @@ class SpeechService {
   }
 
   public stopListening() {
-    if (this.recognition && this.isListening) {
+    this.isListening = false;
+    this.activeHandlers = null;
+    if (this.recognition) {
       try {
         this.recognition.stop();
       } catch (err) {
         console.warn('Error stopping recognition', err);
       }
     }
-    this.isListening = false;
     this.stopAudioVisualizer();
   }
 
@@ -211,7 +231,6 @@ class SpeechService {
     }
   }
 
-  // Text-To-Speech (TTS) Voice Feedback with acoustic loop prevention
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -220,14 +239,13 @@ class SpeechService {
       }
 
       this.isSpeakingTTS = true;
-      window.speechSynthesis.cancel(); // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
       utterance.rate = 1.05;
       utterance.pitch = 1.0;
 
-      // Match voice
       const voices = window.speechSynthesis.getVoices();
       const matchedVoice = voices.find(
         (v) => v.lang.startsWith(langCode.substring(0, 2)) || v.lang === langCode
