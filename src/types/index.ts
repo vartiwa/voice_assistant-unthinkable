@@ -70,18 +70,21 @@ export type VoiceIntent =
   | 'WAKE_GREETING'
   | 'UNKNOWN';
 
+export interface ExtractedItemDetail {
+  name: string;
+  quantity: number;
+  unit: string;
+  category?: Category;
+  brand?: string;
+  maxPrice?: number;
+  isOrganic?: boolean;
+}
+
 export interface ParsedVoiceCommand {
   intent: VoiceIntent;
   rawText: string;
-  itemDetails?: {
-    name: string;
-    quantity: number;
-    unit: string;
-    category?: Category;
-    brand?: string;
-    maxPrice?: number;
-    isOrganic?: boolean;
-  };
+  itemDetails?: ExtractedItemDetail;
+  items?: ExtractedItemDetail[]; // Multi-item additions support
   searchQuery?: string;
   priceFilter?: number;
   feedbackMessage: string;

@@ -1,4 +1,4 @@
-import { Category, ParsedVoiceCommand } from '../types';
+import { Category, ParsedVoiceCommand, ExtractedItemDetail } from '../types';
 import { CATEGORY_MAP, PRODUCT_CATALOG } from '../data/catalog';
 
 // Number words map across supported languages (including Indian English, Hindi & Tamil)
@@ -301,6 +301,12 @@ export class NLPEngine {
     let quantity = 1;
     let unit = 'item';
 
+    // Strip leading conversational phrases
+    text = text
+      .replace(/^(?:i want to add|please add to cart|please add|can you add|can you please add|could you add|add to cart|put into cart|put in cart|add|buy|get|need|put|include|i want|i need|mujhe chahiye|chahiye|daalo|jodo|lao|venum|podu|podunga)\s+/i, '')
+      .replace(/^(?:the|some|a|an)\s+/i, '')
+      .trim();
+
     // 1. Check for numeric digits or decimals (e.g. "3", "2.5", "0.5", "1/2")
     const numericMatch = text.match(/^(?:add\s+|buy\s+|need\s+|get\s+|chahiye\s+|venum\s+)?(\d+(?:\.\d+)?|\d+\/\d+)\s*(.*)/i);
     if (numericMatch) {
@@ -338,7 +344,7 @@ export class NLPEngine {
 
     if (COMMON_UNITS.includes(potentialUnit) || COMMON_UNITS.includes(cleanUnit)) {
       unit = potentialUnit;
-      // Strip "of" if present (e.g. "gallons of milk" -> "milk")
+      // Strip "of" / "ka" / "kooda"
       const remaining = unitTokens.slice(1);
       if (remaining[0]?.toLowerCase() === 'of' || remaining[0]?.toLowerCase() === 'ka' || remaining[0]?.toLowerCase() === 'kooda') {
         text = remaining.slice(1).join(' ');
@@ -351,13 +357,35 @@ export class NLPEngine {
     text = text
       .replace(/\b(chahiye|lao|daalo|jodo|de do|add karo|kharido)\b/gi, '')
       .replace(/\b(venum|podu|podunga|vaanganum|edunga|add pannu|add pannunga)\b/gi, '')
-      .replace(/\b(please|please add|can you add|i want to buy|i want|give me)\b/gi, '')
+      .replace(/\b(to my list|to the list|to my cart|to the cart|to list|in list|in cart|into cart|into the cart)\b/gi, '')
+      .replace(/\b(please|please add|can you add|i want to buy|i want|give me|also|and also|thanks|thank you)\b/gi, '')
       .trim();
 
     return {
       quantity: Math.max(quantity, 0.25),
       unit,
       cleanedName: text.trim(),
+    };
+  }
+
+  // Parse a single item clause into an ExtractedItemDetail
+  private parseItemClause(clause: string, rawTextForOrganic: string): ExtractedItemDetail | null {
+    const { quantity, unit, cleanedName } = this.extractQuantityAndUnit(clause);
+    if (!cleanedName || cleanedName.length < 2) return null;
+
+    const category = inferCategory(cleanedName);
+    const defaults = inferProductDefaults(cleanedName);
+    const displayName = defaults.fullName || cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1);
+    const finalUnit = unit !== 'item' ? unit : defaults.unit;
+
+    return {
+      name: displayName,
+      category,
+      quantity,
+      unit: finalUnit,
+      brand: defaults.brand,
+      isOrganic: defaults.isOrganic || /organic/i.test(clause) || /organic/i.test(rawTextForOrganic),
+      maxPrice: defaults.price,
     };
   }
 
@@ -373,10 +401,10 @@ export class NLPEngine {
       };
     }
 
-    // Wake Word Detection (supports "Hey Assistant", "VoiceCart", "Namaste Assistant", "Vanakkam Assistant", "Assistant")
+    // Comprehensive Wake Word Detection with phonetic mis-hearings & "hey add to cart"
     const wakeWordMatches = [
-      /^(?:hey|ok|hello|namaste|vanakkam)\s+(?:assistant|cart|google|voice\s*cart)[,\s]*/i,
-      /^(?:voice\s*cart|assistant|shopping assistant)[,\s]*/i,
+      /^(?:hey|ok|okay|hello|namaste|vanakkam|hi|oye|listen)\s+(?:assistant|assistence|assistance|assist|cart|add\s+to\s+cart|google|voice\s*cart|voicecart)[,\s]*/i,
+      /^(?:voice\s*cart|voicecart|assistant|assistence|assistance|shopping assistant|hey\s+add\s+to\s+cart|add\s+to\s+cart|put\s+in\s+cart|cart\s+mein\s+daalo)[,\s]*/i,
     ];
 
     let cleanedText = text;
@@ -390,7 +418,7 @@ export class NLPEngine {
       }
     }
 
-    // If user ONLY said the wake word
+    // If user ONLY said the wake word ("Hey Assistant", "Hey Assistance", "Hey add to cart", etc.)
     if (hadWakeWord && !cleanedText) {
       return {
         intent: 'WAKE_GREETING',
@@ -546,10 +574,10 @@ export class NLPEngine {
       };
     }
 
-    // 6. ADD ITEM COMMANDS (Default natural speech intent with Indian phonetics & accents)
+    // 6. ADD ITEM COMMANDS (With Smart Multi-Item Splitting e.g. "milk and apples", "2 kg atta, milk and eggs")
     let itemInput = lower
-      .replace(/^(?:i want to add|please add|can you add|add|buy|get|need|put|include|i want|i need|chahiye|daalo|jodo|lao|venum|podu|podunga)\s+/i, '')
-      .replace(/(?:to my list|to the list|to my cart|to the cart|to list|in list|in cart|add karo|add pannu|add pannunga|kharido|vaanganum)$/i, '')
+      .replace(/^(?:i want to add|please add to cart|please add|can you please add|can you add|could you add|add to cart|put into cart|put in cart|add|buy|get|need|put|include|i want|i need|mujhe chahiye|chahiye|daalo|jodo|lao|venum|podu|podunga)\s+/i, '')
+      .replace(/(?:to my list|to the list|to my cart|to the cart|to list|in list|in cart|into cart|into the cart|add karo|add pannu|add pannunga|kharido|vaanganum)$/i, '')
       .replace(/^(?:the|some|a|an)\s+/i, '')
       .trim();
 
@@ -557,29 +585,66 @@ export class NLPEngine {
       itemInput = lower;
     }
 
-    const { quantity, unit, cleanedName } = this.extractQuantityAndUnit(itemInput);
-    const finalCleanName = cleanedName || itemInput;
+    // Check for multi-item connectors (" and ", " & ", ", ", " aur ", " matrum ")
+    const clauses = itemInput
+      .split(/\s+(?:and|&|aur|matrum)\s+|,\s*/i)
+      .map((c) => c.trim())
+      .filter((c) => c.length > 1);
 
-    const category = inferCategory(finalCleanName);
-    const defaults = inferProductDefaults(finalCleanName);
+    if (clauses.length > 1) {
+      const extractedList: ExtractedItemDetail[] = [];
+      for (const clause of clauses) {
+        const item = this.parseItemClause(clause, text);
+        if (item) extractedList.push(item);
+      }
 
-    // Use full formal product name if catalog matched
-    const displayName = defaults.fullName || finalCleanName.charAt(0).toUpperCase() + finalCleanName.slice(1);
-    const finalUnit = unit !== 'item' ? unit : defaults.unit;
+      if (extractedList.length > 1) {
+        const itemNames = extractedList.map((i) => `${i.quantity} ${i.unit !== 'item' ? i.unit + ' ' : ''}${i.name}`).join(' and ');
+        return {
+          intent: 'ADD_ITEM',
+          rawText: text,
+          items: extractedList,
+          itemDetails: extractedList[0],
+          feedbackMessage: `Added ${itemNames} to your cart.`,
+          success: true,
+        };
+      }
+    }
+
+    // Single item fallback
+    const singleItem = this.parseItemClause(itemInput, text);
+    if (singleItem) {
+      return {
+        intent: 'ADD_ITEM',
+        rawText: text,
+        items: [singleItem],
+        itemDetails: singleItem,
+        feedbackMessage: `Added ${singleItem.quantity} ${singleItem.unit !== 'item' ? singleItem.unit + ' of ' : ''}${singleItem.name} to ${singleItem.category || 'your cart'}.`,
+        success: true,
+      };
+    }
+
+    // Default fallback
+    const category = inferCategory(itemInput);
+    const defaults = inferProductDefaults(itemInput);
+    const displayName = defaults.fullName || itemInput.charAt(0).toUpperCase() + itemInput.slice(1);
+
+    const fallbackDetail: ExtractedItemDetail = {
+      name: displayName,
+      category,
+      quantity: 1,
+      unit: defaults.unit,
+      brand: defaults.brand,
+      isOrganic: defaults.isOrganic || /organic/i.test(text),
+      maxPrice: defaults.price,
+    };
 
     return {
       intent: 'ADD_ITEM',
       rawText: text,
-      itemDetails: {
-        name: displayName,
-        category,
-        quantity,
-        unit: finalUnit,
-        brand: defaults.brand,
-        isOrganic: defaults.isOrganic || /organic/i.test(rawText),
-        maxPrice: defaults.price,
-      },
-      feedbackMessage: `Added ${quantity} ${finalUnit !== 'item' ? finalUnit + ' of ' : ''}${displayName} to ${category}.`,
+      items: [fallbackDetail],
+      itemDetails: fallbackDetail,
+      feedbackMessage: `Added ${displayName} to ${category}.`,
       success: true,
     };
   }

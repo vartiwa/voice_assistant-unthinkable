@@ -161,31 +161,39 @@ export const App: React.FC = () => {
         }
 
         case 'ADD_ITEM': {
-          if (parsed.itemDetails) {
-            const detail = parsed.itemDetails;
-            setItems((prev) => {
-              const existingIdx = prev.findIndex(
-                (i) => i.name.toLowerCase() === detail.name.toLowerCase()
-              );
-              if (existingIdx !== -1) {
-                const updated = [...prev];
-                updated[existingIdx].quantity += detail.quantity;
-                return updated;
-              }
+          const itemsToAdd = parsed.items && parsed.items.length > 0
+            ? parsed.items
+            : parsed.itemDetails ? [parsed.itemDetails] : [];
 
-              const newItem: ShoppingItem = {
-                id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-                name: detail.name,
-                category: detail.category || 'Other',
-                quantity: detail.quantity,
-                unit: detail.unit,
-                price: detail.maxPrice || 3.49,
-                brand: detail.brand,
-                isOrganic: detail.isOrganic,
-                completed: false,
-                addedAt: new Date().toISOString(),
-              };
-              return [newItem, ...prev];
+          if (itemsToAdd.length > 0) {
+            setItems((prev) => {
+              let updated = [...prev];
+              for (const detail of itemsToAdd) {
+                const existingIdx = updated.findIndex(
+                  (i) => i.name.toLowerCase() === detail.name.toLowerCase()
+                );
+                if (existingIdx !== -1) {
+                  updated[existingIdx] = {
+                    ...updated[existingIdx],
+                    quantity: updated[existingIdx].quantity + detail.quantity,
+                  };
+                } else {
+                  const newItem: ShoppingItem = {
+                    id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                    name: detail.name,
+                    category: detail.category || 'Other',
+                    quantity: detail.quantity,
+                    unit: detail.unit,
+                    price: detail.maxPrice || 3.49,
+                    brand: detail.brand,
+                    isOrganic: detail.isOrganic,
+                    completed: false,
+                    addedAt: new Date().toISOString(),
+                  };
+                  updated = [newItem, ...updated];
+                }
+              }
+              return updated;
             });
 
             try {
