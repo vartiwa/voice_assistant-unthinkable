@@ -17,23 +17,23 @@ export const InteractionFeedCard: React.FC<InteractionFeedCardProps> = ({
   onQuickUndo,
 }) => {
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-slate-200/90 dark:border-zinc-800 shadow-xs flex flex-col h-full min-h-0 justify-between overflow-hidden">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs flex flex-col space-y-3">
       
       {/* Header matching Sketch (CHAT) */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <Terminal className="w-3.5 h-3.5 text-slate-500" />
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2.5 shrink-0">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-slate-500" />
           <h4 className="font-extrabold text-xs text-slate-900 dark:text-white tracking-wider uppercase">
             CHAT · Activity Stream
           </h4>
         </div>
-        <span className="text-[10px] font-mono text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
+        <span className="text-[10px] font-mono text-slate-400 font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800">
           {messages.length} events
         </span>
       </div>
 
-      {/* Message Stream with isolated internal scrolling */}
-      <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
+      {/* Message Stream with flexible scrolling */}
+      <div className="space-y-3 overflow-y-auto max-h-[400px] pr-1.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
         {messages.map((msg) => (
           <div
             key={msg.id}

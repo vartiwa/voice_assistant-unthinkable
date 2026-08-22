@@ -422,7 +422,7 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen lg:h-screen lg:max-h-screen bg-[#FBFBFA] dark:bg-[#0C0D0E] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-[#1E3A8A] selection:text-white lg:overflow-hidden">
+    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0C0D0E] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-[#1E3A8A] selection:text-white scroll-smooth">
       
       {/* Top Header matching V-Cart from sketch */}
       <Navbar
@@ -449,18 +449,18 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container matching the User's Hand-Drawn Sketch */}
-      <main className="w-full max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-6 py-2 sm:py-3 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1">
         
         {/* Main 2-Column Blueprint Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* ========================================================= */}
           {/* LEFT MAIN AREA (8 Cols / 67%): HERO (Time + Orb) + [CHAT & RECOMEDS] */}
           {/* ========================================================= */}
-          <div className="lg:col-span-8 flex flex-col gap-3.5 min-h-0 h-full">
+          <div className="lg:col-span-8 space-y-6">
             
             {/* 1. TOP HERO SECTION: Time/Date box on left + 3D Orb in center (From Sketch) */}
-            <div className="shrink-0">
+            <div>
               <CenterHeroStage
                 liveTranscript={liveTranscript}
                 isListening={isListening}
@@ -478,10 +478,10 @@ export const App: React.FC = () => {
             </div>
 
             {/* 2. BOTTOM 2-COLUMN ROW (From Sketch): Left = CHAT, Right = RECOMEDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 flex-1 min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               
               {/* CHAT Box (From Sketch) */}
-              <div className="flex flex-col min-h-0 h-full">
+              <div className="flex flex-col">
                 <InteractionFeedCard
                   messages={messages}
                   onOpenCart={() => setActiveView('cart')}
@@ -505,7 +505,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* RECOMEDS Box (From Sketch) */}
-              <div className="flex flex-col min-h-0 h-full">
+              <div className="flex flex-col">
                 <CompactSuggestionsWidget
                   suggestions={suggestions}
                   onAddSuggestion={handleAddSuggestion}
@@ -520,7 +520,7 @@ export const App: React.FC = () => {
           {/* ========================================================= */}
           {/* RIGHT SIDEBAR (4 Cols / 33%): Dedicated CART            */}
           {/* ========================================================= */}
-          <div className="lg:col-span-4 flex flex-col min-h-0 h-full">
+          <div className="lg:col-span-4 space-y-6">
             <ShoppingListView
               items={items}
               onToggleComplete={handleToggleComplete}
