@@ -8,7 +8,6 @@ import { nlpEngine } from './services/nlpService';
 import { Navbar } from './components/Navbar';
 import { DesktopMainStage } from './components/DesktopMainStage';
 import { ChatMessage } from './components/VoiceChatStream';
-import { BottomFloatingBar } from './components/BottomFloatingBar';
 import { ImmersiveVoiceOverlay } from './components/ImmersiveVoiceOverlay';
 import { ShoppingListView } from './components/ShoppingListView';
 import { SuggestionsView } from './components/SuggestionsView';
@@ -16,8 +15,8 @@ import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
 import { ShoppingBag, Sparkles } from 'lucide-react';
 
-const STORAGE_KEY = 'voice_cart_items_v4';
-const CHAT_STORAGE_KEY = 'voice_cart_chat_v4';
+const STORAGE_KEY = 'voice_cart_items_v5';
+const CHAT_STORAGE_KEY = 'voice_cart_chat_v5';
 
 export const App: React.FC = () => {
   // 1. Shopping List State
@@ -75,7 +74,7 @@ export const App: React.FC = () => {
       {
         id: 'msg-1',
         sender: 'assistant',
-        text: 'Hello! I am VoiceCart AI. You can speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
+        text: 'Hello! I am VoiceCart AI. Speak naturally to add items, search products, or say "Hey Assistant" to command hands-free.',
         timestamp: 'Just now',
       },
     ];
@@ -99,7 +98,7 @@ export const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
 
   // 5. Views & Modals State
-  const [activeView, setActiveView] = useState<'chat' | 'cart' | 'suggestions'>('chat');
+  const [activeView, setActiveView] = useState<'chat' | 'cart' | 'suggestions'>('cart');
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,7 +273,7 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Lightning-fast 900ms silence debounce for snappy voice processing
+        // Snappy 900ms silence timer
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
@@ -459,9 +458,9 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8F8F6] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
       
-      {/* Top Navbar */}
+      {/* Full-width Top Navbar */}
       <Navbar
         selectedLang={selectedLanguage.speechCode}
         onLanguageChange={handleLanguageChange}
@@ -470,21 +469,20 @@ export const App: React.FC = () => {
         onOpenHelp={() => setIsHelpOpen(true)}
         itemCount={items.length}
         totalPrice={totalPrice}
-        isListening={isListening}
         activeView={activeView}
         onSelectView={setActiveView}
         isHandsFree={isHandsFree}
         onToggleHandsFree={handleToggleHandsFree}
       />
 
-      {/* Main Desktop Workspace Layout */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+      {/* Edge-to-Edge Desktop Workspace Canvas */}
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-5 flex-1">
         
-        {/* Desktop Split View: Wide Main Stage on Left, Live Shopping Cart & Suggestions on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Full-Width Desktop Grid: Left Voice Stage (5 cols) & Right Cart (7 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Main Stage / Voice Chat Column (Takes 5 cols on laptop) */}
-          <div className="lg:col-span-5 xl:col-span-5">
+          {/* Left Column: Voice Assistant & Interaction Stage */}
+          <div className="lg:col-span-5 xl:col-span-5 sticky top-20">
             <DesktopMainStage
               messages={messages}
               liveTranscript={liveTranscript}
@@ -493,41 +491,47 @@ export const App: React.FC = () => {
               onToggleListen={toggleListening}
               onQuickPrompt={executeCommand}
               onOpenCart={() => setActiveView('cart')}
+              onOpenCatalog={() => {
+                setSearchQuery('');
+                setSearchMaxPrice(undefined);
+                setIsSearchOpen(true);
+              }}
+              onExecuteCommand={executeCommand}
               isHandsFree={isHandsFree}
             />
           </div>
 
-          {/* Right Panel Column (Expanded to 7 cols on laptop for generous space!) */}
-          <div className="lg:col-span-7 xl:col-span-7 sticky top-20 space-y-4">
+          {/* Right Column: Full-Width Shopping Cart & Smart Suggestions Canvas */}
+          <div className="lg:col-span-7 xl:col-span-7 space-y-4">
             
-            {/* Tab Pill to switch between Cart & Suggestions on Desktop */}
-            <div className="flex items-center p-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm text-xs font-bold">
+            {/* View Switcher Bar on Right Canvas */}
+            <div className="flex items-center p-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-2xs text-xs font-bold">
               <button
                 onClick={() => setActiveView('cart')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
                   activeView === 'cart' || activeView === 'chat'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Live Cart ({items.length})</span>
+                <ShoppingBag className="w-4 h-4" />
+                <span>Live Shopping Cart ({items.length} items)</span>
               </button>
 
               <button
                 onClick={() => setActiveView('suggestions')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
                   activeView === 'suggestions'
                     ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Smart Suggestions</span>
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Smart Suggestions & Deals</span>
               </button>
             </div>
 
-            {/* Content Display based on active right tab */}
+            {/* Content Display */}
             {activeView === 'suggestions' ? (
               <SuggestionsView
                 suggestions={suggestions}
@@ -558,24 +562,7 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Bottom Floating Command Bar (Desktop Pill) */}
-      <BottomFloatingBar
-        isListening={isListening}
-        onToggleListen={toggleListening}
-        onOpenImmersiveVoice={() => setIsImmersiveOpen(true)}
-        onOpenCatalog={() => {
-          setSearchQuery('');
-          setSearchMaxPrice(undefined);
-          setIsSearchOpen(true);
-        }}
-        onExecuteCommand={executeCommand}
-        selectedLang={selectedLanguage}
-        onLanguageChange={handleLanguageChange}
-        isHandsFree={isHandsFree}
-        onToggleHandsFree={handleToggleHandsFree}
-      />
-
-      {/* Immersive 3D Iridescent Fullscreen Overlay */}
+      {/* Immersive 3D Voice Screen Overlay */}
       <ImmersiveVoiceOverlay
         isOpen={isImmersiveOpen}
         onClose={() => setIsImmersiveOpen(false)}
