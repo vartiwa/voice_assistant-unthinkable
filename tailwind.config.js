@@ -8,28 +8,40 @@ export default {
   theme: {
     extend: {
       colors: {
+        canvas: {
+          light: '#FBFBFA',
+          dark: '#0C0D0E',
+        },
+        surface: {
+          light: '#FFFFFF',
+          dark: '#161719',
+        },
+        accent: {
+          coral: '#F25C3B',
+          amber: '#F59E0B',
+          sage: '#10B981',
+          indigo: '#4F46E5',
+        },
         brand: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+          50: '#FDF8F6',
+          100: '#F2E8E5',
+          200: '#EADDD7',
+          300: '#E0CEC7',
+          400: '#D2BBB2',
+          500: '#F25C3B',
+          600: '#E14B2A',
+          700: '#C73B1B',
+          800: '#9E2C12',
+          900: '#1C1917',
         }
       },
-      animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'wave': 'wave 1.5s ease-in-out infinite',
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
       },
-      keyframes: {
-        wave: {
-          '0%, 100%': { transform: 'scaleY(0.4)' },
-          '50%': { transform: 'scaleY(1)' },
-        }
+      boxShadow: {
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        'elevated': '0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03)',
       }
     },
   },

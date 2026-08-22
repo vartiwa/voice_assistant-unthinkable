@@ -468,7 +468,7 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F8F8F6] dark:bg-zinc-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0C0D0E] text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors selection:bg-[#F25C3B] selection:text-white">
       
       {/* Full-width Top Navbar */}
       <Navbar
