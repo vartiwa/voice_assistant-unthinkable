@@ -485,6 +485,22 @@ export const App: React.FC = () => {
                 <InteractionFeedCard
                   messages={messages}
                   onOpenCart={() => setActiveView('cart')}
+                  onQuickIncrement={(itemName) => {
+                    const existing = items.find(
+                      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+                    );
+                    if (existing) {
+                      handleUpdateQuantity(existing.id, 1);
+                    }
+                  }}
+                  onQuickUndo={(itemName) => {
+                    const existing = items.find(
+                      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+                    );
+                    if (existing) {
+                      handleDeleteItem(existing.id);
+                    }
+                  }}
                 />
               </div>
 

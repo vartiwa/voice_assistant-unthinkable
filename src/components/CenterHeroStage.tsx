@@ -9,7 +9,9 @@ import {
   Clock, 
   RotateCcw, 
   Leaf,
-  Activity
+  Activity,
+  Sparkles,
+  Radio
 } from 'lucide-react';
 
 interface CenterHeroStageProps {
@@ -69,89 +71,107 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
 
   const realCommandExamples = [
     { label: 'Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
+    { label: 'Dairy', cmd: 'Add 2 bottles of Whole Milk' },
     { label: 'Pantry', cmd: 'Add 1 kg Atta and 2 packets milk' },
     { label: 'Hindi', cmd: '2 packet paneer aur doodh add karo' },
     { label: 'Tamil', cmd: '1 kg thakkali and arisi venum' },
+    { label: 'Filter', cmd: 'Find earphones under $30' },
   ];
 
-  // Equalizer visualizer bars (5 bars)
+  // Dynamic Equalizer visualizer bars (7 bars)
   const barHeights = [
-    Math.min(100, Math.max(15, (audioLevel * 1.2) % 100)),
-    Math.min(100, Math.max(25, (audioLevel * 1.8) % 100)),
-    Math.min(100, Math.max(35, (audioLevel * 2.2) % 100)),
-    Math.min(100, Math.max(20, (audioLevel * 1.6) % 100)),
-    Math.min(100, Math.max(15, (audioLevel * 1.1) % 100)),
+    Math.min(100, Math.max(18, (audioLevel * 1.3) % 100)),
+    Math.min(100, Math.max(28, (audioLevel * 1.9) % 100)),
+    Math.min(100, Math.max(45, (audioLevel * 2.5) % 100)),
+    Math.min(100, Math.max(60, (audioLevel * 2.8) % 100)),
+    Math.min(100, Math.max(42, (audioLevel * 2.4) % 100)),
+    Math.min(100, Math.max(26, (audioLevel * 1.7) % 100)),
+    Math.min(100, Math.max(18, (audioLevel * 1.2) % 100)),
   ];
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-2.5">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-zinc-800 shadow-xs space-y-3">
       
-      {/* Top Row matching Sketch: Time/Date box on left + 3D Orb in middle */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+      {/* Top Row matching Sketch: Time/Date box on left + Breathtaking Big 3D Orb in middle */}
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
         
         {/* Left: Time & Date Box from Sketch */}
-        <div className="sm:col-span-4 text-left p-2.5 rounded-xl bg-slate-50/80 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/60 space-y-1.5">
-          <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-zinc-700/60">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-              <Calendar className="w-3 h-3 text-slate-500" />
+        <div className="sm:col-span-4 text-left p-3 rounded-xl bg-slate-50/80 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/60 space-y-2">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/60 dark:border-zinc-700/60">
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800 dark:text-slate-200">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span>{currentDateStr}</span>
             </div>
-            <div className="flex items-center gap-1 text-[10.5px] font-mono font-semibold text-slate-400">
-              <Clock className="w-2.5 h-2.5" />
+            <div className="flex items-center gap-1 text-[11px] font-mono font-semibold text-slate-400">
+              <Clock className="w-3 h-3" />
               <span>{currentTimeStr}</span>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10.5px]">
-              <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <RotateCcw className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <RotateCcw className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Restock Cycle</span>
               </span>
-              <span className="text-[9.5px] font-mono font-bold px-1 py-0.1 rounded bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
-                {daysToMonthEnd}d left
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
+                {daysToMonthEnd} days left
               </span>
             </div>
 
             {/* Micro Progress Bar */}
-            <div className="w-full h-1 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-emerald-500 rounded-full transition-all"
+                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${Math.max(10, 100 - (daysToMonthEnd / 30) * 100)}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Center: The ORB from Sketch */}
-        <div className="sm:col-span-8 flex items-center justify-center gap-4">
-          <div className="cursor-pointer shrink-0" onClick={onToggleListen}>
-            <IridescentOrb size="md" isListening={isListening} audioLevel={audioLevel || 20} />
+        {/* Center: The Big Interactive 3D Pearl Orb */}
+        <div className="sm:col-span-8 flex items-center justify-center gap-5">
+          <div 
+            className="cursor-pointer shrink-0 transition-transform active:scale-95" 
+            onClick={onToggleListen}
+          >
+            <IridescentOrb size="hero" isListening={isListening} audioLevel={audioLevel || 20} />
           </div>
 
-          {/* Audio Visualizer & Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 text-xs font-semibold">
-            {isListening ? (
-              <div className="flex items-center gap-1">
-                <div className="flex items-end gap-0.5 h-2.5">
-                  {barHeights.map((h, i) => (
-                    <span
-                      key={i}
-                      className="w-0.5 bg-emerald-500 rounded-full transition-all duration-75"
-                      style={{ height: `${h}%` }}
-                    />
-                  ))}
+          {/* Interactive Live Audio Visualizer & Voice Status */}
+          <div className="flex flex-col items-start gap-1.5">
+            <div 
+              onClick={onToggleListen}
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-zinc-800/90 border border-slate-200 dark:border-zinc-700 text-xs font-semibold cursor-pointer hover:bg-slate-200/70 transition-all shadow-2xs"
+            >
+              {isListening ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-end gap-0.5 h-3.5">
+                    {barHeights.map((h, i) => (
+                      <span
+                        key={i}
+                        className="w-0.5 bg-emerald-500 rounded-full transition-all duration-75"
+                        style={{ height: `${h}%` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-emerald-700 dark:text-emerald-300 font-extrabold text-xs tracking-wider flex items-center gap-1">
+                    <Radio className="w-3 h-3 animate-pulse" />
+                    <span>{isHandsFree ? 'HANDS-FREE LISTENING' : 'LISTENING...'}</span>
+                  </span>
                 </div>
-                <span className="text-emerald-700 dark:text-emerald-300 font-bold ml-1 text-[11px]">
-                  {isHandsFree ? 'HANDS-FREE ON' : 'LISTENING...'}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-slate-400" />
-                <span>{isHandsFree ? 'Say "Hey Assistant"' : 'Click Orb to Speak'}</span>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{isHandsFree ? 'Say "Hey Assistant"' : 'Click Orb to Speak'}</span>
+                </div>
+              )}
+            </div>
+
+            <span className="text-[10px] font-mono text-slate-400 pl-1 flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+              <span>Multilingual AI · Speech-to-Cart</span>
+            </span>
           </div>
         </div>
 
@@ -159,15 +179,15 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
 
       {/* Real-Time Live Speech Subtitle Display */}
       {liveTranscript && (
-        <div className="w-full px-3 py-1.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-left animate-in fade-in">
-          <div className="flex items-center justify-between text-[9.5px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+        <div className="w-full px-3.5 py-2 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-left animate-in fade-in">
+          <div className="flex items-center justify-between text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
             <span>HEARING REAL-TIME:</span>
             <span className="flex items-center gap-1">
-              <Activity className="w-2.5 h-2.5 animate-pulse" />
+              <Activity className="w-3 h-3 animate-pulse" />
               <span>TRANSCRIBING</span>
             </span>
           </div>
-          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate">
+          <p className="text-xs font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5">
             "{liveTranscript}"
           </p>
         </div>
@@ -181,10 +201,10 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         <button
           type="button"
           onClick={onOpenCatalog}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 transition-colors shrink-0"
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 transition-colors shrink-0"
           title="Browse Catalog"
         >
-          <Search className="w-3.5 h-3.5" />
+          <Search className="w-4 h-4" />
         </button>
 
         <input
@@ -194,17 +214,17 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           placeholder={
             isHandsFree
               ? 'Say "Hey Assistant, add milk" or type a command...'
-              : 'Speak or type: "Add 2 bottles milk", "Find earphones"...'
+              : 'Speak or type: "Add 2 bottles milk", "Find earphones under $30"...'
           }
-          className="flex-1 bg-transparent px-2 py-0.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+          className="flex-1 bg-transparent px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
         />
 
         {inputText.trim() && (
           <button
             type="submit"
-            className="p-1.5 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs shrink-0"
+            className="p-2 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs shrink-0 hover:opacity-90 transition-opacity"
           >
-            <Send className="w-3 h-3" />
+            <Send className="w-3.5 h-3.5" />
           </button>
         )}
 
@@ -212,28 +232,31 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         <button
           type="button"
           onClick={onToggleListen}
-          className={`p-2 rounded-lg text-white font-bold transition-all shrink-0 flex items-center justify-center ${
+          className={`p-2 sm:px-3 rounded-lg text-white font-bold transition-all shrink-0 flex items-center gap-1.5 ${
             isListening
               ? 'bg-orange-600 ring-2 ring-orange-400 animate-pulse'
-              : 'bg-orange-500 hover:bg-orange-600 active:scale-95'
+              : 'bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-xs'
           }`}
           title={isListening ? 'Stop Listening' : 'Start Voice Input'}
         >
-          {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          <span className="hidden sm:inline text-xs font-bold">
+            {isListening ? 'Stop' : 'Speak'}
+          </span>
         </button>
       </form>
 
-      {/* Clean Prompt Chips */}
-      <div className="flex flex-wrap items-center justify-center gap-1 pt-0.5">
-        <span className="text-[10px] font-mono text-slate-400 mr-0.5 flex items-center gap-0.5">
-          <Leaf className="w-2.5 h-2.5 text-emerald-500" />
-          <span>PROMPTS:</span>
+      {/* Clean Interactive Prompt Chips */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+        <span className="text-[10px] font-mono font-bold text-slate-400 mr-0.5 flex items-center gap-1">
+          <Leaf className="w-3 h-3 text-emerald-500" />
+          <span>TRY SPEAKING:</span>
         </span>
         {realCommandExamples.map((item, idx) => (
           <button
             key={idx}
             onClick={() => onQuickPrompt(item.cmd)}
-            className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[10px] font-medium text-slate-700 dark:text-slate-300 transition-colors border border-slate-200/60 dark:border-zinc-700/60"
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[10.5px] font-medium text-slate-700 dark:text-slate-300 transition-all border border-slate-200/70 dark:border-zinc-700/70 hover:scale-105 active:scale-95"
           >
             "{item.cmd}"
           </button>
