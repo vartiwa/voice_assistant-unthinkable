@@ -378,12 +378,47 @@ export const inferProductDefaults = (
   };
 };
 
+// Acoustic & Phonetic Speech Mishearing Normalizer (e.g. "hotels" -> "bottles", "pockets" -> "packets")
+export function normalizeAcousticSpeech(text: string): string {
+  let cleaned = text;
+
+  // 1. "bottles" vs "hotels" / "bottels" / "hottles" / "botel"
+  cleaned = cleaned.replace(/\b(?:hotels?|hottles?|bottels?|botels?)\b/gi, (match) => {
+    return match.toLowerCase().endsWith('s') ? 'bottles' : 'bottle';
+  });
+
+  // 2. "packets" vs "pockets" / "packts" / "pakets"
+  cleaned = cleaned.replace(/\b(?:pockets?|packts?|pakets?)\b/gi, (match) => {
+    return match.toLowerCase().endsWith('s') ? 'packets' : 'packet';
+  });
+
+  // 3. "dozen" vs "dosen" / "dozn" / "darjan" / "dajan"
+  cleaned = cleaned.replace(/\b(?:dosens?|dozns?|darjans?|dajans?)\b/gi, 'dozen');
+
+  // 4. "pieces" vs "peaces" / "peices"
+  cleaned = cleaned.replace(/\b(?:peaces?|peices?)\b/gi, (match) => {
+    return match.toLowerCase().endsWith('s') ? 'pieces' : 'piece';
+  });
+
+  // 5. "cartons" vs "kartons" / "curtons"
+  cleaned = cleaned.replace(/\b(?:kartons?|curtons?)\b/gi, (match) => {
+    return match.toLowerCase().endsWith('s') ? 'cartons' : 'carton';
+  });
+
+  // 6. "loaves" vs "lofs" / "loafs"
+  cleaned = cleaned.replace(/\b(?:lofs?|loafs?)\b/gi, (match) => {
+    return match.toLowerCase().endsWith('s') ? 'loaves' : 'loaf';
+  });
+
+  return cleaned;
+}
+
 export class NLPEngine {
   // Extract quantity, unit, and clean name from raw speech (supports prefix & suffix quantities)
   public extractQuantityAndUnit(
     rawText: string
   ): { quantity: number; unit: string; cleanedName: string } {
-    let text = rawText.trim();
+    let text = normalizeAcousticSpeech(rawText.trim());
     let quantity = 1;
     let unit = 'item';
 
@@ -520,7 +555,7 @@ export class NLPEngine {
 
   // Main NLP command parser
   public parseCommand(rawText: string, _language: string = 'en-IN'): ParsedVoiceCommand {
-    const text = rawText.trim();
+    const text = normalizeAcousticSpeech(rawText.trim());
     if (!text) {
       return {
         intent: 'UNKNOWN',
