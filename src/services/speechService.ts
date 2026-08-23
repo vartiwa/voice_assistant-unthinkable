@@ -37,9 +37,28 @@ class SpeechService {
   private isSpeakingTTS: boolean = false;
   private activeHandlers: SpeechRecognitionHandlers | null = null;
   private restartTimeout: any = null;
+  
+  // Persistent reference to prevent Chrome garbage-collection speech cutoff
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private cachedVoices: SpeechSynthesisVoice[] = [];
+  private speechKeepAliveInterval: any = null;
 
   constructor() {
     this.initRecognition();
+    this.initVoices();
+  }
+
+  private initVoices() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    const loadVoices = () => {
+      this.cachedVoices = window.speechSynthesis.getVoices();
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
   }
 
   private initRecognition() {
@@ -67,7 +86,7 @@ class SpeechService {
   public setMuted(muted: boolean) {
     this.ttsMuted = muted;
     if (muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      this.stopSpeaking();
     }
   }
 
@@ -147,7 +166,7 @@ class SpeechService {
     };
 
     this.recognition.onend = () => {
-      // Auto-restart if hands-free/continuous listening is active and not currently playing TTS
+      // Auto-restart if listening is active and not currently playing TTS
       if (this.isListening && !this.isSpeakingTTS && this.activeHandlers) {
         this.safeRestartRecognition();
         return;
@@ -160,10 +179,9 @@ class SpeechService {
     };
 
     try {
-      this.recognition.lang = this.currentLanguage;
       this.recognition.start();
-    } catch (err: any) {
-      // Already running is okay
+    } catch (e) {
+      this.safeRestartRecognition();
     }
   }
 
@@ -176,15 +194,14 @@ class SpeechService {
         try {
           this.recognition.start();
         } catch (e) {
-          // Ignore if already started
+          // Already started or busy
         }
       }
-    }, 60);
+    }, 300);
   }
 
   public stopListening() {
     this.isListening = false;
-    this.activeHandlers = null;
     if (this.restartTimeout) {
       clearTimeout(this.restartTimeout);
       this.restartTimeout = null;
@@ -192,45 +209,68 @@ class SpeechService {
     if (this.recognition) {
       try {
         this.recognition.stop();
-      } catch (err) {}
+      } catch (e) {}
     }
     this.stopAudioVisualizer();
+    if (this.activeHandlers) {
+      this.activeHandlers.onEnd();
+    }
   }
 
-  private async startAudioVisualizer(onAudioLevel?: (level: number) => void) {
+  // Real-Time Web Audio API Decibel Analyser
+  private startAudioVisualizer(onAudioLevel?: (level: number) => void) {
     if (!onAudioLevel || typeof window === 'undefined') return;
 
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && !this.mediaStream) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        this.mediaStream = stream;
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        this.audioContext = new AudioContextClass();
-        const source = this.audioContext.createMediaStreamSource(stream);
-        this.analyser = this.audioContext.createAnalyser();
-        this.analyser.fftSize = 64;
-        source.connect(this.analyser);
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
 
-        const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-
-        const tick = () => {
-          if (!this.analyser || !this.isListening) return;
-          this.analyser.getByteFrequencyData(dataArray);
-          let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-          }
-          const avg = sum / dataArray.length;
-          const normalized = Math.min(100, Math.round((avg / 255) * 100 * 2));
-          onAudioLevel(normalized);
-          this.animFrameId = requestAnimationFrame(tick);
-        };
-
-        this.animFrameId = requestAnimationFrame(tick);
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioCtxClass();
       }
-    } catch (err) {
-      console.warn('AudioVisualizer mic access unavailable:', err);
-    }
+
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          this.mediaStream = stream;
+          if (!this.audioContext) return;
+
+          const source = this.audioContext.createMediaStreamSource(stream);
+          this.analyser = this.audioContext.createAnalyser();
+          this.analyser.fftSize = 256;
+          this.analyser.smoothingTimeConstant = 0.8;
+          source.connect(this.analyser);
+
+          const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
+          const updateVolume = () => {
+            if (!this.analyser || !this.isListening) {
+              if (onAudioLevel) onAudioLevel(0);
+              return;
+            }
+
+            this.analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+              sum += dataArray[i];
+            }
+            const average = sum / dataArray.length;
+            const normalized = Math.min(100, Math.round((average / 128) * 100));
+
+            onAudioLevel(normalized);
+            this.animFrameId = requestAnimationFrame(updateVolume);
+          };
+
+          updateVolume();
+        })
+        .catch(() => {
+          // Mic visualizer fallback
+        });
+    } catch (e) {}
   }
 
   private stopAudioVisualizer() {
@@ -248,48 +288,91 @@ class SpeechService {
     }
   }
 
-  // Select warm, natural female voice across platforms (Zira, Samantha, Google, Victoria, Swara, etc.)
+  // Pure Female Voice Selection across Windows, macOS, Android, iOS, Chrome, Edge
   private getBestFemaleVoice(langCode: string): SpeechSynthesisVoice | null {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-    const voices = window.speechSynthesis.getVoices();
+    
+    const voices = this.cachedVoices.length > 0 
+      ? this.cachedVoices 
+      : window.speechSynthesis.getVoices();
+
     if (!voices || voices.length === 0) return null;
 
     const shortLang = langCode.substring(0, 2).toLowerCase();
     const exactLang = langCode.toLowerCase().replace('_', '-');
 
-    const preferredFemaleKeywords = [
-      'female', 'woman', 'zira', 'samantha', 'victoria', 'karen', 'moira',
-      'fiona', 'tessa', 'sangeeta', 'veena', 'priya', 'swara', 'monica',
-      'amelie', 'marie', 'petra', 'marlene', 'vicki', 'natural', 'online',
-      'google', 'microsoft'
+    // Known male voice keywords to strictly reject
+    const maleBlacklist = [
+      'david', 'george', 'mark', 'male', 'ravi', 'guy', 'richard', 
+      'stefan', 'paul', 'james', 'thomas', 'daniel', 'oliver', 'alex'
     ];
 
+    // Priority female voice engines
+    const femalePriority = [
+      'zira', 'samantha', 'victoria', 'karen', 'moira', 'fiona', 'tessa',
+      'heera', 'swara', 'veena', 'sangeeta', 'priya', 'female', 'woman',
+      'google uk english female', 'google us english', 'google हिन्दी', 'google தமிழ்',
+      'natural (female)', 'online (natural) - english'
+    ];
+
+    // 1. Filter voices in target language
     const langVoices = voices.filter((v) => {
       const vLang = v.lang.toLowerCase().replace('_', '-');
       return vLang === exactLang || vLang.startsWith(shortLang);
     });
 
-    if (langVoices.length === 0) {
-      return voices.find((v) => {
+    // Search in target language first
+    if (langVoices.length > 0) {
+      // Find top female priority
+      for (const keyword of femalePriority) {
+        const found = langVoices.find((v) => {
+          const name = v.name.toLowerCase();
+          const isBlacklisted = maleBlacklist.some((m) => name.includes(m));
+          return !isBlacklisted && name.includes(keyword);
+        });
+        if (found) return found;
+      }
+
+      // Any non-male voice in target language
+      const nonMale = langVoices.find((v) => {
         const name = v.name.toLowerCase();
-        return preferredFemaleKeywords.some((kw) => name.includes(kw));
-      }) || voices[0] || null;
+        return !maleBlacklist.some((m) => name.includes(m));
+      });
+      if (nonMale) return nonMale;
     }
 
-    const femaleMatch = langVoices.find((v) => {
+    // 2. Global fallback to female voice
+    for (const keyword of femalePriority) {
+      const found = voices.find((v) => {
+        const name = v.name.toLowerCase();
+        const isBlacklisted = maleBlacklist.some((m) => name.includes(m));
+        return !isBlacklisted && name.includes(keyword);
+      });
+      if (found) return found;
+    }
+
+    // 3. Any non-male voice globally
+    const safeVoice = voices.find((v) => {
       const name = v.name.toLowerCase();
-      if (name.includes('david') || name.includes('george') || name.includes('mark') || name.includes('male') || name.includes('ravi') || name.includes('guy')) {
-        return false;
-      }
-      return preferredFemaleKeywords.some((kw) => name.includes(kw));
+      return !maleBlacklist.some((m) => name.includes(m));
     });
 
-    if (femaleMatch) return femaleMatch;
-
-    const nonMale = langVoices.find((v) => !v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('david'));
-    return nonMale || langVoices[0];
+    return safeVoice || voices[0] || null;
   }
 
+  public stopSpeaking() {
+    if (this.speechKeepAliveInterval) {
+      clearInterval(this.speechKeepAliveInterval);
+      this.speechKeepAliveInterval = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.isSpeakingTTS = false;
+    this.activeUtterance = null;
+  }
+
+  // Robust, Glitch-Free Natural Female Speech Synthesis
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -297,38 +380,86 @@ class SpeechService {
         return;
       }
 
-      this.isSpeakingTTS = true;
-      window.speechSynthesis.cancel();
+      // Clean spoken text: strip markdown syntax, currency symbols, backticks
+      const cleanSpokenText = text
+        .replace(/[*_#`~]/g, '')
+        .replace(/\$(\d+(?:\.\d+)?)/g, '$1 dollars')
+        .replace(/₹(\d+(?:\.\d+)?)/g, '$1 rupees')
+        .trim();
 
-      // Temporarily abort recognition to avoid hearing ourselves
-      if (this.recognition) {
+      if (!cleanSpokenText) {
+        resolve();
+        return;
+      }
+
+      // Ensure clean state before speaking
+      this.stopSpeaking();
+      this.isSpeakingTTS = true;
+
+      // Pause speech recognition while speaking to prevent feedback echo loops
+      if (this.recognition && this.isListening) {
         try {
-          this.recognition.abort();
+          this.recognition.stop();
         } catch (e) {}
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
+      this.activeUtterance = utterance; // Strong reference prevents GC cutoff!
+
       utterance.lang = langCode;
-      utterance.rate = 1.0;
-      utterance.pitch = 1.08; // Slightly elevated pitch for warm, friendly, natural female voice tone
+      utterance.rate = 0.98; // Stable, natural human cadence (prevents voice stutter)
+      utterance.pitch = 1.0; // Clean natural pitch (prevents cracking/distortion)
 
       const matchedVoice = this.getBestFemaleVoice(langCode);
       if (matchedVoice) {
         utterance.voice = matchedVoice;
       }
 
-      const resumeAfterTTS = () => {
-        this.isSpeakingTTS = false;
-        if (this.isListening && this.activeHandlers) {
-          this.safeRestartRecognition();
+      // Chromium keep-alive to prevent 15-second speech freeze bug
+      this.speechKeepAliveInterval = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          if (this.speechKeepAliveInterval) {
+            clearInterval(this.speechKeepAliveInterval);
+            this.speechKeepAliveInterval = null;
+          }
         }
+      }, 5000);
+
+      const cleanupAndResolve = () => {
+        if (this.speechKeepAliveInterval) {
+          clearInterval(this.speechKeepAliveInterval);
+          this.speechKeepAliveInterval = null;
+        }
+        this.isSpeakingTTS = false;
+        this.activeUtterance = null;
+
+        // Restart recognition cleanly after speaking
+        if (this.isListening && this.activeHandlers) {
+          setTimeout(() => {
+            this.safeRestartRecognition();
+          }, 200);
+        }
+
         resolve();
       };
 
-      utterance.onend = resumeAfterTTS;
-      utterance.onerror = resumeAfterTTS;
+      utterance.onend = cleanupAndResolve;
+      utterance.onerror = (err) => {
+        // Ignore aborted errors
+        cleanupAndResolve();
+      };
 
-      window.speechSynthesis.speak(utterance);
+      // Speak with a tiny 30ms delay to let the audio buffer stabilize
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          cleanupAndResolve();
+        }
+      }, 30);
     });
   }
 
@@ -338,58 +469,51 @@ class SpeechService {
     try {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtxClass) return;
+
       const ctx = new AudioCtxClass();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      const now = ctx.currentTime;
 
       if (type === 'listen') {
-        // Soft rising two-tone wake chime (523Hz -> 659Hz)
-        const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
         gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.2);
       } else if (type === 'success') {
-        // Harmonic confirmation triad (523Hz -> 659Hz -> 784Hz)
-        const now = ctx.currentTime;
-        [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 triad
+        freqs.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
+          const noteTime = now + idx * 0.06;
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + i * 0.05);
-          gain.gain.setValueAtTime(0.06, now + i * 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.22);
+          osc.frequency.setValueAtTime(freq, noteTime);
+          gain.gain.setValueAtTime(0.06, noteTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.18);
           osc.connect(gain);
           gain.connect(ctx.destination);
-          osc.start(now + i * 0.05);
-          osc.stop(now + i * 0.05 + 0.22);
+          osc.start(noteTime);
+          osc.stop(noteTime + 0.2);
         });
       } else if (type === 'cancel') {
-        // Gentle descending tone (659Hz -> 440Hz)
-        const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(659.25, now);
-        osc.frequency.exponentialRampToValueAtTime(440.0, now + 0.15);
+        osc.frequency.setValueAtTime(440, now); // A4
+        osc.frequency.exponentialRampToValueAtTime(349.23, now + 0.12); // F4
         gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.18);
+        osc.stop(now + 0.16);
       }
-    } catch (e) {
-      console.warn('Earcon audio feedback unavailable:', e);
-    }
+    } catch (e) {}
   }
 }
 
