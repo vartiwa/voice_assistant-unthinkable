@@ -301,6 +301,7 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
+        // Patient Speech Debounce: Wait 1600ms after user stops speaking before executing command
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
@@ -312,7 +313,7 @@ export const App: React.FC = () => {
             latestTranscriptRef.current = '';
             executeCommand(finalCmd);
           }
-        }, 900);
+        }, 1600);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });
