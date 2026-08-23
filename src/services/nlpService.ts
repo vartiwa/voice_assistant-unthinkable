@@ -379,7 +379,7 @@ export const inferProductDefaults = (
 };
 
 export class NLPEngine {
-  // Extract quantity, unit, and clean name from raw speech
+  // Extract quantity, unit, and clean name from raw speech (supports prefix & suffix quantities)
   public extractQuantityAndUnit(
     rawText: string
   ): { quantity: number; unit: string; cleanedName: string } {
@@ -393,48 +393,87 @@ export class NLPEngine {
       .replace(/^(?:the|some|a|an)\s+/i, '')
       .trim();
 
-    // 1. Check for numeric digits or decimals (e.g. "3", "2.5", "0.5", "1/2")
-    const numericMatch = text.match(/^(?:add\s+|buy\s+|need\s+|get\s+|chahiye\s+|venum\s+)?(\d+(?:\.\d+)?|\d+\/\d+)\s*(.*)/i);
-    if (numericMatch) {
-      const numStr = numericMatch[1];
-      if (numStr.includes('/')) {
-        const [nom, denom] = numStr.split('/');
-        quantity = parseFloat(nom) / parseFloat(denom);
-      } else {
-        quantity = parseFloat(numStr);
-      }
-      text = numericMatch[2].trim();
-    } else {
-      // 2. Check for number words in English, Hindi, Tamil
-      const tokens = text.split(/\s+/);
-      const firstWord = tokens[0]?.toLowerCase();
-      const secondWord = tokens[1]?.toLowerCase();
+    // 1. Check for suffix quantity pattern first (e.g. "milk 2 packets", "doodh do packet", "atta 5 kg", "paneer 2 packet")
+    const suffixPattern = /\s+(?:(\d+(?:\.\d+)?|\d+\/\d+|[a-zA-Z]+))\s+([a-zA-Z]+)$/i;
+    const suffixMatch = text.match(suffixPattern);
+    if (suffixMatch) {
+      const candidateNum = suffixMatch[1].toLowerCase();
+      const candidateUnit = suffixMatch[2].toLowerCase();
+      const cleanUnit = candidateUnit.replace(/s$/, '');
 
-      if (tokens.length > 1 && NUMBER_WORDS[firstWord] !== undefined) {
-        quantity = NUMBER_WORDS[firstWord];
-        text = tokens.slice(1).join(' ');
-      } else if (
-        tokens.length > 2 &&
-        (firstWord === 'add' || firstWord === 'buy' || firstWord === 'get' || firstWord === 'need' || firstWord === 'ek' || firstWord === 'onnu') &&
-        NUMBER_WORDS[secondWord] !== undefined
-      ) {
-        quantity = NUMBER_WORDS[secondWord];
-        text = tokens.slice(2).join(' ');
+      let parsedQty: number | undefined = undefined;
+      if (/^\d/.test(candidateNum)) {
+        if (candidateNum.includes('/')) {
+          const [nom, denom] = candidateNum.split('/');
+          parsedQty = parseFloat(nom) / parseFloat(denom);
+        } else {
+          parsedQty = parseFloat(candidateNum);
+        }
+      } else if (NUMBER_WORDS[candidateNum] !== undefined) {
+        parsedQty = NUMBER_WORDS[candidateNum];
+      }
+
+      if (parsedQty !== undefined && (COMMON_UNITS.includes(candidateUnit) || COMMON_UNITS.includes(cleanUnit))) {
+        quantity = parsedQty;
+        unit = candidateUnit;
+        text = text.replace(suffixPattern, '').trim();
       }
     }
 
-    // 3. Check for unit
-    const unitTokens = text.split(/\s+/);
-    const potentialUnit = unitTokens[0]?.toLowerCase();
-    const cleanUnit = potentialUnit?.replace(/s$/, ''); // normalize plural
+    // 2. If no suffix matched, check for prefix quantity pattern (e.g. "two packets of milk", "2 packets milk", "3 bottles milk")
+    if (quantity === 1 && unit === 'item') {
+      // Check multi-word numbers first (e.g. "two dozen", "half dozen", "one and a half")
+      for (const [multiWord, val] of Object.entries(NUMBER_WORDS)) {
+        if (multiWord.includes(' ') && text.toLowerCase().startsWith(multiWord)) {
+          quantity = val;
+          text = text.substring(multiWord.length).trim();
+          break;
+        }
+      }
 
-    if (COMMON_UNITS.includes(potentialUnit) || COMMON_UNITS.includes(cleanUnit)) {
-      unit = potentialUnit;
-      const remaining = unitTokens.slice(1);
-      if (remaining[0]?.toLowerCase() === 'of' || remaining[0]?.toLowerCase() === 'ka' || remaining[0]?.toLowerCase() === 'kooda') {
-        text = remaining.slice(1).join(' ');
-      } else {
-        text = remaining.join(' ');
+      // Check numeric digits (e.g. "3", "2.5", "0.5", "1/2")
+      const numericMatch = text.match(/^(?:add\s+|buy\s+|need\s+|get\s+|chahiye\s+|venum\s+)?(\d+(?:\.\d+)?|\d+\/\d+)\s*(.*)/i);
+      if (numericMatch) {
+        const numStr = numericMatch[1];
+        if (numStr.includes('/')) {
+          const [nom, denom] = numStr.split('/');
+          quantity = parseFloat(nom) / parseFloat(denom);
+        } else {
+          quantity = parseFloat(numStr);
+        }
+        text = numericMatch[2].trim();
+      } else if (quantity === 1) {
+        // Check single word numbers in English, Hindi, Tamil
+        const tokens = text.split(/\s+/);
+        const firstWord = tokens[0]?.toLowerCase();
+        const secondWord = tokens[1]?.toLowerCase();
+
+        if (tokens.length > 0 && NUMBER_WORDS[firstWord] !== undefined) {
+          quantity = NUMBER_WORDS[firstWord];
+          text = tokens.slice(1).join(' ');
+        } else if (
+          tokens.length > 1 &&
+          (firstWord === 'add' || firstWord === 'buy' || firstWord === 'get' || firstWord === 'need' || firstWord === 'ek' || firstWord === 'onnu') &&
+          NUMBER_WORDS[secondWord] !== undefined
+        ) {
+          quantity = NUMBER_WORDS[secondWord];
+          text = tokens.slice(2).join(' ');
+        }
+      }
+
+      // 3. Check for unit immediately following the prefix number
+      const unitTokens = text.split(/\s+/);
+      const potentialUnit = unitTokens[0]?.toLowerCase();
+      const cleanUnit = potentialUnit?.replace(/s$/, ''); // normalize plural
+
+      if (COMMON_UNITS.includes(potentialUnit) || COMMON_UNITS.includes(cleanUnit)) {
+        unit = potentialUnit;
+        const remaining = unitTokens.slice(1);
+        if (remaining[0]?.toLowerCase() === 'of' || remaining[0]?.toLowerCase() === 'ka' || remaining[0]?.toLowerCase() === 'kooda') {
+          text = remaining.slice(1).join(' ');
+        } else {
+          text = remaining.join(' ');
+        }
       }
     }
 
@@ -445,6 +484,11 @@ export class NLPEngine {
       .replace(/\b(to my list|to the list|to my cart|to the cart|to list|in list|in cart|into cart|into the cart)\b/gi, '')
       .replace(/\b(please|please add|can you add|i want to buy|i want|give me|also|and also|thanks|thank you)\b/gi, '')
       .trim();
+
+    // Fallback if user said "two packets" without a specific item name
+    if (!text && unit !== 'item') {
+      text = `${unit.charAt(0).toUpperCase() + unit.slice(1)}`;
+    }
 
     return {
       quantity: Math.max(quantity, 0.25),
