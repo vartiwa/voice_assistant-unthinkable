@@ -304,6 +304,75 @@ export const inferCategory = (name: string): Category => {
   return 'Other';
 };
 
+export const INDIAN_ENGLISH_MAPPINGS: Record<string, { name: string; category: Category; price: number; unit: string; brand?: string; isOrganic?: boolean }> = {
+  // Dairy & Everyday
+  milk: { name: 'Fresh Whole Milk', category: 'Dairy & Eggs', price: 3.49, unit: 'bottle' },
+  doodh: { name: 'Fresh Whole Milk', category: 'Dairy & Eggs', price: 3.49, unit: 'bottle' },
+  paneer: { name: 'Fresh Paneer (Cottage Cheese)', category: 'Dairy & Eggs', price: 4.49, unit: 'pack' },
+  curd: { name: 'Fresh Dahi Curd / Yogurt', category: 'Dairy & Eggs', price: 2.99, unit: 'tub' },
+  dahi: { name: 'Fresh Dahi Curd / Yogurt', category: 'Dairy & Eggs', price: 2.99, unit: 'tub' },
+  butter: { name: 'Salted Dairy Butter', category: 'Dairy & Eggs', price: 3.99, unit: 'pack' },
+  makhan: { name: 'Fresh Butter / Makhan', category: 'Dairy & Eggs', price: 3.99, unit: 'pack' },
+  cheese: { name: 'Cheddar Cheese Slices', category: 'Dairy & Eggs', price: 4.29, unit: 'pack' },
+  egg: { name: 'Farm Fresh Organic Eggs', category: 'Dairy & Eggs', price: 4.99, unit: 'dozen', isOrganic: true },
+  eggs: { name: 'Farm Fresh Organic Eggs', category: 'Dairy & Eggs', price: 4.99, unit: 'dozen', isOrganic: true },
+  anda: { name: 'Farm Fresh Organic Eggs', category: 'Dairy & Eggs', price: 4.99, unit: 'dozen', isOrganic: true },
+  ande: { name: 'Farm Fresh Organic Eggs', category: 'Dairy & Eggs', price: 4.99, unit: 'dozen', isOrganic: true },
+  muttai: { name: 'Farm Fresh Eggs', category: 'Dairy & Eggs', price: 4.99, unit: 'dozen' },
+
+  // Bakery & Breakfast
+  bread: { name: 'Whole Wheat Sourdough Bread', category: 'Bakery', price: 4.29, unit: 'loaf' },
+  roti: { name: 'Fresh Whole Wheat Roti', category: 'Bakery', price: 2.99, unit: 'pack' },
+  pav: { name: 'Fresh Bakery Pav Buns', category: 'Bakery', price: 2.49, unit: 'pack' },
+  biscuit: { name: 'Parle-G & Marie Biscuits', category: 'Snacks', price: 1.99, unit: 'pack' },
+  biscuits: { name: 'Parle-G & Marie Biscuits', category: 'Snacks', price: 1.99, unit: 'pack' },
+  cookie: { name: 'Chocolate Chip Cookies', category: 'Snacks', price: 3.49, unit: 'pack' },
+  cookies: { name: 'Chocolate Chip Cookies', category: 'Snacks', price: 3.49, unit: 'pack' },
+  maggi: { name: 'Maggi 2-Minute Masala Noodles', category: 'Pantry', price: 1.49, unit: 'pack' },
+  noodle: { name: 'Maggi Masala Instant Noodles', category: 'Pantry', price: 1.49, unit: 'pack' },
+  noodles: { name: 'Maggi Masala Instant Noodles', category: 'Pantry', price: 1.49, unit: 'pack' },
+
+  // Produce
+  apple: { name: 'Organic Honeycrisp Apples', category: 'Produce', price: 3.99, unit: 'lb', isOrganic: true },
+  apples: { name: 'Organic Honeycrisp Apples', category: 'Produce', price: 3.99, unit: 'lb', isOrganic: true },
+  seb: { name: 'Organic Red Apples', category: 'Produce', price: 3.99, unit: 'lb', isOrganic: true },
+  banana: { name: 'Fresh Yellow Bananas', category: 'Produce', price: 0.69, unit: 'lb' },
+  bananas: { name: 'Fresh Yellow Bananas', category: 'Produce', price: 0.69, unit: 'lb' },
+  kela: { name: 'Fresh Bananas', category: 'Produce', price: 0.69, unit: 'lb' },
+  tomato: { name: 'Roma Tomatoes', category: 'Produce', price: 1.99, unit: 'lb' },
+  tomatoes: { name: 'Roma Tomatoes', category: 'Produce', price: 1.99, unit: 'lb' },
+  tamatar: { name: 'Fresh Roma Tomatoes', category: 'Produce', price: 1.99, unit: 'lb' },
+  thakkali: { name: 'Fresh Tomatoes', category: 'Produce', price: 1.99, unit: 'lb' },
+  potato: { name: 'Russet Potatoes', category: 'Produce', price: 2.49, unit: 'bag' },
+  potatoes: { name: 'Russet Potatoes', category: 'Produce', price: 2.49, unit: 'bag' },
+  aalu: { name: 'Fresh Potatoes', category: 'Produce', price: 2.49, unit: 'bag' },
+  aloo: { name: 'Fresh Potatoes', category: 'Produce', price: 2.49, unit: 'bag' },
+  onion: { name: 'Red Onions', category: 'Produce', price: 2.29, unit: 'bag' },
+  onions: { name: 'Red Onions', category: 'Produce', price: 2.29, unit: 'bag' },
+  pyaz: { name: 'Fresh Red Onions', category: 'Produce', price: 2.29, unit: 'bag' },
+  vengayam: { name: 'Fresh Onions', category: 'Produce', price: 2.29, unit: 'bag' },
+
+  // Pantry & Spices
+  atta: { name: 'Aashirvaad Whole Wheat Atta', category: 'Pantry', price: 7.99, unit: 'kg' },
+  rice: { name: 'Royal Basmati Rice', category: 'Pantry', price: 6.99, unit: 'bag' },
+  chawal: { name: 'Basmati Rice', category: 'Pantry', price: 6.99, unit: 'bag' },
+  arisi: { name: 'Basmati Rice', category: 'Pantry', price: 6.99, unit: 'bag' },
+  dal: { name: 'Toor Dal / Yellow Lentils', category: 'Pantry', price: 3.49, unit: 'pack' },
+  daal: { name: 'Toor Dal / Yellow Lentils', category: 'Pantry', price: 3.49, unit: 'pack' },
+  oil: { name: 'Refined Cooking Oil', category: 'Pantry', price: 5.49, unit: 'bottle' },
+  tel: { name: 'Cooking Oil', category: 'Pantry', price: 5.49, unit: 'bottle' },
+  sugar: { name: 'Pure Granulated Sugar', category: 'Pantry', price: 2.99, unit: 'kg' },
+  cheeni: { name: 'Granulated Sugar', category: 'Pantry', price: 2.99, unit: 'kg' },
+  salt: { name: 'Iodized Table Salt', category: 'Pantry', price: 1.29, unit: 'pack' },
+  namak: { name: 'Tata Iodized Salt', category: 'Pantry', price: 1.29, unit: 'pack' },
+  tea: { name: 'Tata Tea Premium / Chai', category: 'Beverages', price: 4.49, unit: 'pack' },
+  chai: { name: 'Assam Chai Tea Leaves', category: 'Beverages', price: 4.49, unit: 'pack' },
+  'tea powder': { name: 'Assam Tea Powder', category: 'Beverages', price: 4.49, unit: 'pack' },
+  'chai patti': { name: 'Tata Tea Chai Patti', category: 'Beverages', price: 4.49, unit: 'pack' },
+  coffee: { name: 'Nescafe Instant Coffee', category: 'Beverages', price: 5.99, unit: 'jar' },
+  chips: { name: 'Lay\'s Classic Potato Chips', category: 'Snacks', price: 2.49, unit: 'pack' },
+};
+
 // Hybrid Catalog Matching & Defaults
 export const inferProductDefaults = (
   name: string
@@ -317,12 +386,26 @@ export const inferProductDefaults = (
   confidence: number;
 } => {
   const lower = name.toLowerCase().trim();
+
+  // 1. Direct Indian English & Grocery Mapping Check (Highest Precision)
+  if (INDIAN_ENGLISH_MAPPINGS[lower]) {
+    const m = INDIAN_ENGLISH_MAPPINGS[lower];
+    return {
+      price: m.price,
+      unit: m.unit,
+      brand: m.brand,
+      isOrganic: m.isOrganic,
+      fullName: m.name,
+      confidence: 0.99,
+    };
+  }
+
   const inputSoundex = getSoundexCode(lower.split(/\s+/)[0] || lower);
 
   let bestMatch: (typeof PRODUCT_CATALOG)[0] | null = null;
   let highestScore = 0;
 
-  // 1. Check exact catalog list via Jaro-Winkler + Soundex
+  // 2. Check exact catalog list via Jaro-Winkler + Soundex
   for (const product of PRODUCT_CATALOG) {
     const prodLower = product.name.toLowerCase();
     const prodSoundex = getSoundexCode(prodLower.split(/\s+/)[0] || prodLower);
