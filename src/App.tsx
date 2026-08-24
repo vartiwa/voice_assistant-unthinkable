@@ -86,7 +86,7 @@ export const App: React.FC = () => {
       {
         id: 'msg-1',
         sender: 'assistant',
-        text: 'Hello! I am Voice Assistance AI. Speak naturally or say "Hey Assistant" to add groceries and items.',
+        text: "Hello! What do you need to add? Tell me, or say 'Stop'.",
         timestamp: 'Just now',
       },
     ];
@@ -143,6 +143,42 @@ export const App: React.FC = () => {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-20)));
     } catch (e) {}
   }, [messages]);
+
+  // Automatic Voice Welcome Greeting on Site Open
+  useEffect(() => {
+    const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
+    let hasSpoken = false;
+
+    const triggerWelcomeSpeech = () => {
+      if (hasSpoken) return;
+      hasSpoken = true;
+      speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
+    };
+
+    // 1. Direct speech attempt on mount
+    const timer = setTimeout(() => {
+      triggerWelcomeSpeech();
+    }, 700);
+
+    // 2. User interaction fallback (handles browser autoplay restriction policies)
+    const onFirstUserAction = () => {
+      triggerWelcomeSpeech();
+      window.removeEventListener('click', onFirstUserAction);
+      window.removeEventListener('keydown', onFirstUserAction);
+      window.removeEventListener('touchstart', onFirstUserAction);
+    };
+
+    window.addEventListener('click', onFirstUserAction, { once: true });
+    window.addEventListener('keydown', onFirstUserAction, { once: true });
+    window.addEventListener('touchstart', onFirstUserAction, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('click', onFirstUserAction);
+      window.removeEventListener('keydown', onFirstUserAction);
+      window.removeEventListener('touchstart', onFirstUserAction);
+    };
+  }, [selectedLanguage]);
 
   // Voice Command Execution Engine
   const executeCommand = useCallback(
