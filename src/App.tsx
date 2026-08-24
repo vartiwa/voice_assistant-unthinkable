@@ -308,19 +308,21 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Snappy Speech Debounce (1100ms): executes as soon as user stops speaking
+        // Snappy Speech Debounce (1000ms): executes as soon as user stops speaking
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
+            setLiveTranscript('');
+            latestTranscriptRef.current = '';
+            // Reset speech accumulation buffer so previous words never contaminate next command
+            speechService.clearCurrentTranscript();
             if (!isHandsFree) {
               speechService.stopListening();
               setIsListening(false);
             }
-            setLiveTranscript('');
-            latestTranscriptRef.current = '';
             executeCommand(finalCmd);
           }
-        }, 1100);
+        }, 1000);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });

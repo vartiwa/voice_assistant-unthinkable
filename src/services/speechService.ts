@@ -33,6 +33,7 @@ class SpeechService {
   private isSpeakingTTS: boolean = false;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private speechKeepAliveInterval: NodeJS.Timeout | null = null;
+  private processedResultIndex: number = 0;
 
   constructor() {
     this.initRecognition();
@@ -55,6 +56,7 @@ class SpeechService {
       rec.maxAlternatives = 1;
       rec.lang = this.currentLanguage;
       this.recognition = rec;
+      this.processedResultIndex = 0;
       return rec;
     } catch (e) {
       console.warn('SpeechRecognition initialization error:', e);
@@ -100,6 +102,7 @@ class SpeechService {
 
     this.recognition.onstart = () => {
       this.isListening = true;
+      this.processedResultIndex = 0;
       if (this.activeHandlers) {
         this.activeHandlers.onStart();
         this.startAudioVisualizer(this.activeHandlers.onAudioLevel);
@@ -110,18 +113,18 @@ class SpeechService {
       // Don't process recognition while TTS voice is speaking feedback
       if (this.isSpeakingTTS) return;
 
-      let fullTranscript = '';
+      let currentTranscript = '';
       let hasFinal = false;
 
-      for (let i = 0; i < event.results.length; ++i) {
+      for (let i = this.processedResultIndex; i < event.results.length; ++i) {
         const res = event.results[i];
-        fullTranscript += res[0].transcript + ' ';
+        currentTranscript += res[0].transcript + ' ';
         if (res.isFinal) {
           hasFinal = true;
         }
       }
 
-      const clean = fullTranscript.trim();
+      const clean = currentTranscript.trim();
       if (clean && this.activeHandlers) {
         this.activeHandlers.onResult(clean, hasFinal);
       }
@@ -172,6 +175,16 @@ class SpeechService {
     }
   }
 
+  // Clears the accumulation buffer so past commands never bleed into new commands
+  public clearCurrentTranscript() {
+    this.processedResultIndex = 0;
+    if (this.recognition && this.isListening) {
+      try {
+        this.recognition.stop();
+      } catch (e) {}
+    }
+  }
+
   public safeRestartRecognition() {
     if (this.restartTimeout) {
       clearTimeout(this.restartTimeout);
@@ -185,11 +198,11 @@ class SpeechService {
           try {
             this.recognition.start();
           } catch (e: any) {
-            // Already started or busy, which is fine
+            // Already started or busy
           }
         }
       }
-    }, 150);
+    }, 120);
   }
 
   public stopListening() {

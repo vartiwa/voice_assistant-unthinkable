@@ -369,8 +369,13 @@ export const INDIAN_ENGLISH_MAPPINGS: Record<string, { name: string; category: C
   chai: { name: 'Tata Tea Gold Chai', category: 'Beverages', price: 110, unit: 'pack' },
   'tea powder': { name: 'Red Label Tea Powder', category: 'Beverages', price: 110, unit: 'pack' },
   'chai patti': { name: 'Tata Tea Chai Patti', category: 'Beverages', price: 110, unit: 'pack' },
-  coffee: { name: 'Nescafe Classic Instant Coffee', category: 'Beverages', price: 165, unit: 'jar' },
   chips: { name: 'Lay\'s India Magic Masala Chips', category: 'Snacks', price: 20, unit: 'pack' },
+  broccoli: { name: 'Fresh Green Broccoli', category: 'Produce', price: 60, unit: 'piece' },
+  broom: { name: 'Cleaning Broom (Jhadu)', category: 'Household', price: 120, unit: 'piece' },
+  jhadu: { name: 'Cleaning Broom (Jhadu)', category: 'Household', price: 120, unit: 'piece' },
+  mop: { name: 'Floor Cleaning Mop', category: 'Household', price: 180, unit: 'piece' },
+  pocha: { name: 'Floor Cleaning Mop / Pocha', category: 'Household', price: 60, unit: 'piece' },
+  detergent: { name: 'Surf Excel Detergent Powder', category: 'Household', price: 140, unit: 'kg' },
 };
 
 // Hybrid Catalog Matching & Defaults
