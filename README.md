@@ -79,6 +79,41 @@ For seamless cross-device usage, VoiceCart implements a local-first caching laye
 
 ---
 
+## 📂 Codebase Architecture & File Structure
+
+```text
+voice-assistant-unthinkable/
+├── src/
+│   ├── components/                 # Reusable Modular React UI Components
+│   │   ├── CenterHeroStage.tsx     # 3D Orb Pedestal, Time Display & Status Banner
+│   │   ├── CommandHelpModal.tsx    # Spoken Command Syntax Cheatsheet Modal
+│   │   ├── CompactSuggestionsWidget.tsx # Routine Habits & Dietary Substitutes Widget
+│   │   ├── InteractionFeedCard.tsx # Real-Time Assistant & User Chat Stream
+│   │   ├── IridescentOrb.tsx       # 3D Audio-Reactive Iridescent Orb Visualizer
+│   │   ├── Navbar.tsx              # Multilingual Switcher, Hands-Free Toggle & Mute
+│   │   ├── SearchModal.tsx         # Voice Search & Budget Price Filter Dialog
+│   │   ├── ShoppingListView.tsx    # Cart View with Grocery Department Divisions
+│   │   └── SyncDeviceModal.tsx     # 6-Digit Mobile ↔ Laptop Sync & Live Market Rates
+│   ├── data/
+│   │   ├── catalog.ts              # Indian Grocery & Electronics Product Catalog
+│   │   └── suggestionsData.ts      # Health Substitutes & Smart Restock Data
+│   ├── services/                   # Core Business Logic & AI Engines
+│   │   ├── livePricingService.ts   # Live Commodity Pricing Simulation API
+│   │   ├── nlpService.ts           # Natural Language Understanding (NLU) & Intent Parser
+│   │   ├── speechService.ts        # Native Web Speech API STT/TTS & Echo Barrier Engine
+│   │   └── userPreferenceService.ts# Repeat Consumption & Cross-Device Sync Engine
+│   ├── types/
+│   │   └── index.ts                # TypeScript Interfaces & Voice Intent Definitions
+│   ├── App.tsx                     # Top-Level State Orchestration & Voice Lifecycle
+│   ├── main.tsx                    # Application Entry Point
+│   └── index.css                   # Tailwind Design System & Custom Themes
+├── approach_writeup.md             # Technical Approach Write-Up (≤ 200 Words)
+├── README.md                       # Comprehensive Technical Documentation
+└── package.json                    # Project Dependencies & Scripts
+```
+
+---
+
 ## 🚀 Quick Start Guide
 
 ### 1. Clone Repository
