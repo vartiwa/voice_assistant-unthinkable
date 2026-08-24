@@ -435,10 +435,10 @@ export const App: React.FC = () => {
       startListeningSession();
     };
 
-    // 1. Direct speech attempt on mount
+    // 1. Direct speech attempt on mount with 3 second delay for smooth page loading
     const timer = setTimeout(() => {
       triggerWelcomeSpeech();
-    }, 600);
+    }, 3000);
 
     // 2. User interaction fallback (handles browser autoplay restriction policies)
     const onFirstUserAction = () => {
