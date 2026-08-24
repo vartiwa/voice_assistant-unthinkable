@@ -25,15 +25,12 @@ class SpeechService {
   private currentLanguage: string = 'en-IN';
   private ttsMuted: boolean = false;
   private activeHandlers: SpeechRecognitionHandlers | null = null;
-  private restartTimeout: NodeJS.Timeout | null = null;
+  private isSpeakingTTS: boolean = false;
+  private processedResultIndex: number = 0;
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private visualizerStream: MediaStream | null = null;
   private visualizerAnimFrame: number | null = null;
-  private isSpeakingTTS: boolean = false;
-  private activeUtterance: SpeechSynthesisUtterance | null = null;
-  private speechKeepAliveInterval: NodeJS.Timeout | null = null;
-  private processedResultIndex: number = 0;
 
   constructor() {
     this.initRecognition();
@@ -45,9 +42,7 @@ class SpeechService {
     const SpeechRecognitionClass =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognitionClass) {
-      return null;
-    }
+    if (!SpeechRecognitionClass) return null;
 
     try {
       const rec = new SpeechRecognitionClass();
@@ -55,11 +50,69 @@ class SpeechService {
       rec.interimResults = true;
       rec.maxAlternatives = 1;
       rec.lang = this.currentLanguage;
+
+      rec.onstart = () => {
+        this.isListening = true;
+        this.processedResultIndex = 0;
+        if (this.activeHandlers) {
+          this.activeHandlers.onStart();
+          this.startAudioVisualizer(this.activeHandlers.onAudioLevel);
+        }
+      };
+
+      rec.onresult = (event: any) => {
+        if (this.isSpeakingTTS) return;
+
+        let currentTranscript = '';
+        let hasFinal = false;
+
+        for (let i = this.processedResultIndex; i < event.results.length; ++i) {
+          const res = event.results[i];
+          currentTranscript += res[0].transcript + ' ';
+          if (res.isFinal) hasFinal = true;
+        }
+
+        const clean = currentTranscript.trim();
+        if (clean && this.activeHandlers && !this.isSpeakingTTS) {
+          this.activeHandlers.onResult(clean, hasFinal);
+        }
+      };
+
+      rec.onerror = (event: any) => {
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          return;
+        }
+
+        if (event.error === 'not-allowed') {
+          this.isListening = false;
+          this.stopAudioVisualizer();
+          if (this.activeHandlers) {
+            this.activeHandlers.onError('Microphone access denied. Please allow mic permissions.');
+          }
+          return;
+        }
+
+        if (this.isListening && !this.isSpeakingTTS) {
+          this.safeRestart();
+        }
+      };
+
+      rec.onend = () => {
+        if (this.isListening && !this.isSpeakingTTS) {
+          this.safeRestart();
+          return;
+        }
+
+        this.stopAudioVisualizer();
+        if (!this.isListening && this.activeHandlers) {
+          this.activeHandlers.onEnd();
+        }
+      };
+
       this.recognition = rec;
-      this.processedResultIndex = 0;
       return rec;
     } catch (e) {
-      console.warn('SpeechRecognition initialization error:', e);
+      console.warn('Recognition setup error:', e);
       return null;
     }
   }
@@ -73,9 +126,7 @@ class SpeechService {
 
   public setMuted(muted: boolean) {
     this.ttsMuted = muted;
-    if (muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.stopSpeaking();
-    }
+    if (muted) this.stopSpeaking();
   }
 
   public getIsMuted(): boolean {
@@ -88,94 +139,24 @@ class SpeechService {
 
   public startListening(handlers: SpeechRecognitionHandlers) {
     this.activeHandlers = handlers;
+    this.isListening = true;
 
     if (!this.recognition) {
       this.initRecognition();
     }
 
     if (!this.recognition) {
-      handlers.onError('Web Speech API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
+      handlers.onError('Web Speech API is not supported in this browser.');
       return;
     }
 
-    this.isListening = true;
-
-    this.recognition.onstart = () => {
-      this.isListening = true;
-      this.processedResultIndex = 0;
-      if (this.activeHandlers) {
-        this.activeHandlers.onStart();
-        this.startAudioVisualizer(this.activeHandlers.onAudioLevel);
-      }
-    };
-
-    this.recognition.onresult = (event: any) => {
-      // Echo shield: don't process recognition while TTS voice is speaking
-      if (this.isSpeakingTTS) return;
-
-      let currentTranscript = '';
-      let hasFinal = false;
-
-      for (let i = this.processedResultIndex; i < event.results.length; ++i) {
-        const res = event.results[i];
-        currentTranscript += res[0].transcript + ' ';
-        if (res.isFinal) {
-          hasFinal = true;
-        }
-      }
-
-      const clean = currentTranscript.trim();
-      if (clean && this.activeHandlers && !this.isSpeakingTTS) {
-        this.activeHandlers.onResult(clean, hasFinal);
-      }
-    };
-
-    this.recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech' || event.error === 'aborted') {
-        // Normal pause - continuous loop keeps running
-        if (this.isListening && !this.isSpeakingTTS) {
-          this.safeRestartRecognition();
-        }
-        return;
-      }
-
-      let msg = 'Speech recognition error';
-      if (event.error === 'not-allowed') {
-        msg = 'Microphone permission denied. Please allow mic access in your browser.';
-        this.isListening = false;
-        this.stopAudioVisualizer();
-        if (this.activeHandlers) this.activeHandlers.onError(msg);
-        return;
-      }
-
-      if (this.isListening && !this.isSpeakingTTS) {
-        this.safeRestartRecognition();
-      }
-    };
-
-    this.recognition.onend = () => {
-      // Auto-restart if listening is active
-      if (this.isListening && this.activeHandlers) {
-        this.safeRestartRecognition();
-        return;
-      }
-
-      this.stopAudioVisualizer();
-      if (!this.isListening && this.activeHandlers) {
-        this.activeHandlers.onEnd();
-      }
-    };
-
     try {
       this.recognition.start();
-    } catch (e: any) {
-      if (e.name !== 'InvalidStateError') {
-        this.safeRestartRecognition();
-      }
+    } catch (e) {
+      // Already running
     }
   }
 
-  // Clears the accumulation buffer so past commands never bleed into new commands
   public clearCurrentTranscript() {
     this.processedResultIndex = 0;
     if (this.recognition && this.isListening) {
@@ -185,32 +166,18 @@ class SpeechService {
     }
   }
 
-  public safeRestartRecognition() {
-    if (this.restartTimeout) {
-      clearTimeout(this.restartTimeout);
-    }
-    this.restartTimeout = setTimeout(() => {
-      if (this.isListening && !this.isSpeakingTTS) {
-        if (!this.recognition) {
-          this.initRecognition();
-        }
-        if (this.recognition) {
-          try {
-            this.recognition.start();
-          } catch (e: any) {
-            // Already started or busy
-          }
-        }
+  private safeRestart() {
+    setTimeout(() => {
+      if (this.isListening && !this.isSpeakingTTS && this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (e) {}
       }
-    }, 120);
+    }, 100);
   }
 
   public stopListening() {
     this.isListening = false;
-    if (this.restartTimeout) {
-      clearTimeout(this.restartTimeout);
-      this.restartTimeout = null;
-    }
     if (this.recognition) {
       try {
         this.recognition.stop();
@@ -270,7 +237,7 @@ class SpeechService {
             this.visualizerAnimFrame = requestAnimationFrame(updateLoop);
           })
           .catch((_err) => {
-            // Simulated audio heartbeat if mic stream blocked
+            // Heartbeat fallback
             let simulatedLevel = 25;
             const simulateLoop = () => {
               if (!this.isListening) return;
@@ -281,9 +248,7 @@ class SpeechService {
             this.visualizerAnimFrame = requestAnimationFrame(simulateLoop);
           });
       }
-    } catch (e) {
-      console.warn('Audio Visualizer setup error:', e);
-    }
+    } catch (e) {}
   }
 
   private stopAudioVisualizer() {
@@ -317,27 +282,17 @@ class SpeechService {
       return femaleKeywords.some((kw) => lower.includes(kw));
     };
 
-    // 1. Language + Female exact match
     const langFemales = voices.filter((v) => {
       const langMatches = v.lang.toLowerCase().replace('_', '-').startsWith(langCode.toLowerCase().split('-')[0]);
       return langMatches && isFemaleName(v.name);
     });
     if (langFemales.length > 0) return langFemales[0];
 
-    // 2. Language match
     const langMatches = voices.filter((v) => {
       return v.lang.toLowerCase().replace('_', '-').startsWith(langCode.toLowerCase().split('-')[0]);
     });
     if (langMatches.length > 0) return langMatches[0];
 
-    // 3. Indian English / Global female voice fallback
-    const indianFemales = voices.filter((v) => 
-      v.lang.toLowerCase().includes('en-in') || 
-      (v.lang.toLowerCase().includes('en') && isFemaleName(v.name))
-    );
-    if (indianFemales.length > 0) return indianFemales[0];
-
-    // 4. Any female voice
     const anyFemale = voices.find((v) => isFemaleName(v.name));
     if (anyFemale) return anyFemale;
 
@@ -346,18 +301,13 @@ class SpeechService {
   }
 
   public stopSpeaking() {
-    if (this.speechKeepAliveInterval) {
-      clearInterval(this.speechKeepAliveInterval);
-      this.speechKeepAliveInterval = null;
-    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     this.isSpeakingTTS = false;
-    this.activeUtterance = null;
   }
 
-  // Robust, Glitch-Free Natural Female Speech Synthesis with 350ms Echo Guard
+  // Clean, Reliable Speech Synthesis
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -365,7 +315,6 @@ class SpeechService {
         return;
       }
 
-      // Clean spoken text: strip markdown syntax, currency symbols, backticks
       const cleanSpokenText = text
         .replace(/[*_#`~]/g, '')
         .replace(/\$(\d+(?:\.\d+)?)/g, '$1 dollars')
@@ -377,71 +326,43 @@ class SpeechService {
         return;
       }
 
-      // Ensure clean state before speaking
       this.stopSpeaking();
       this.isSpeakingTTS = true;
 
       const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
-      this.activeUtterance = utterance; // Strong reference prevents GC cutoff!
-
       utterance.lang = langCode;
-      utterance.rate = 0.98; // Stable, natural human cadence (prevents voice stutter)
-      utterance.pitch = 1.0; // Clean natural pitch (prevents cracking/distortion)
+      utterance.rate = 0.98;
+      utterance.pitch = 1.0;
 
       const matchedVoice = this.getBestFemaleVoice(langCode);
       if (matchedVoice) {
         utterance.voice = matchedVoice;
       }
 
-      // Chromium keep-alive to prevent 15-second speech freeze bug
-      this.speechKeepAliveInterval = setInterval(() => {
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.pause();
-          window.speechSynthesis.resume();
-        } else {
-          if (this.speechKeepAliveInterval) {
-            clearInterval(this.speechKeepAliveInterval);
-            this.speechKeepAliveInterval = null;
-          }
-        }
-      }, 5000);
-
-      const cleanupAndResolve = () => {
-        if (this.speechKeepAliveInterval) {
-          clearInterval(this.speechKeepAliveInterval);
-          this.speechKeepAliveInterval = null;
-        }
-        this.activeUtterance = null;
-
-        // 350ms Echo Barrier: Discard any mic feedback from speaker before reenabling recognition
+      const handleDone = () => {
+        // Discard any residual mic input from speaker
         setTimeout(() => {
           this.isSpeakingTTS = false;
           this.clearCurrentTranscript();
-          if (this.isListening && this.activeHandlers) {
-            this.safeRestartRecognition();
+          if (this.isListening) {
+            this.safeRestart();
           }
           resolve();
-        }, 350);
+        }, 300);
       };
 
-      utterance.onend = cleanupAndResolve;
-      utterance.onerror = (_err) => {
-        cleanupAndResolve();
-      };
+      utterance.onend = handleDone;
+      utterance.onerror = () => handleDone();
 
-      // Speak with a tiny delay to let the audio buffer stabilize
-      setTimeout(() => {
-        try {
-          window.speechSynthesis.speak(utterance);
-        } catch (e) {
-          cleanupAndResolve();
-        }
-      }, 30);
+      try {
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        handleDone();
+      }
     });
   }
 
-  // Web Audio API synthesized earcons (listen start, success chime, cancel)
-  public playEarcon(type: 'listen' | 'success' | 'cancel' = 'listen') {
+  public playEarcon(type: 'listen' | 'success' | 'cancel' = 'success') {
     if (this.ttsMuted || typeof window === 'undefined') return;
     try {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -450,26 +371,14 @@ class SpeechService {
       const ctx = new AudioCtxClass();
       const now = ctx.currentTime;
 
-      if (type === 'listen') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.13);
-      } else if (type === 'success') {
+      if (type === 'success') {
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const gain = ctx.createGain();
         osc1.type = 'sine';
         osc2.type = 'sine';
-        osc1.frequency.setValueAtTime(523.25, now); // C5
-        osc2.frequency.setValueAtTime(659.25, now + 0.08); // E5
+        osc1.frequency.setValueAtTime(523.25, now);
+        osc2.frequency.setValueAtTime(659.25, now + 0.08);
         gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
         osc1.connect(gain);
@@ -483,7 +392,7 @@ class SpeechService {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.setValueAtTime(550, now);
         osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
         gain.gain.setValueAtTime(0.07, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
@@ -492,9 +401,7 @@ class SpeechService {
         osc.start(now);
         osc.stop(now + 0.13);
       }
-    } catch (e) {
-      // AudioContext policy fallback
-    }
+    } catch (e) {}
   }
 }
 

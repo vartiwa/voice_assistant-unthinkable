@@ -121,6 +121,7 @@ export const App: React.FC = () => {
 
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<string>('');
+  const hasGreetedRef = useRef(false);
 
   // Voice Command Execution Engine
   const executeCommand = useCallback(
@@ -146,7 +147,7 @@ export const App: React.FC = () => {
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
-      // Play soft harmonic earcon chime on intent match
+      // Play soft earcon chime
       if (parsed.intent !== 'UNKNOWN' && parsed.intent !== 'STOP_LISTENING') {
         speechService.playEarcon('success');
       }
@@ -169,7 +170,6 @@ export const App: React.FC = () => {
             setItems((prev) => {
               let updated = [...prev];
               for (const detail of itemsToAdd) {
-                // Record repeat consumption pattern
                 userPreferenceService.recordItemUsage(detail.name, detail.category || 'Other', detail.brand);
 
                 const existingIdx = updated.findIndex(
@@ -278,7 +278,6 @@ export const App: React.FC = () => {
   const startListeningSession = useCallback(() => {
     latestTranscriptRef.current = '';
     setLiveTranscript('');
-    speechService.playEarcon('listen');
     speechService.startListening({
       onStart: () => setIsListening(true),
       onEnd: () => {
@@ -287,7 +286,7 @@ export const App: React.FC = () => {
           setAudioLevel(0);
         }
       },
-      onError: (_err) => {
+      onError: () => {
         if (!isHandsFree) {
           setIsListening(false);
         }
@@ -296,30 +295,25 @@ export const App: React.FC = () => {
         latestTranscriptRef.current = transcript;
         setLiveTranscript(transcript);
 
-        const lowerTranscript = transcript.toLowerCase().trim();
+        const lower = transcript.toLowerCase().trim();
 
-        // ⚡ INSTANT 0ms ZERO-LATENCY STOP / SLEEP TRIGGER
-        // If the user says "stop", "sleep", "done", "ok done", "bas", "ho gaya" anywhere in the utterance,
-        // execute immediately without waiting for any silence timer!
-        const isImmediateStop =
-          lowerTranscript === 'stop' ||
-          lowerTranscript === 'sleep' ||
-          lowerTranscript === 'ok done' ||
-          lowerTranscript === 'okay done' ||
-          lowerTranscript === 'all done' ||
-          lowerTranscript === 'done' ||
-          lowerTranscript === 'shut up' ||
-          lowerTranscript === 'quiet' ||
-          lowerTranscript === 'bas' ||
-          lowerTranscript === 'ho gaya' ||
-          lowerTranscript === 'khatam' ||
-          lowerTranscript === 'itna hi' ||
-          lowerTranscript === 'podhum' ||
-          lowerTranscript === 'mudinjadhu' ||
-          lowerTranscript === 'go to sleep' ||
-          lowerTranscript === 'stop listening';
+        // Instant Stop & Sleep Command Trigger
+        const isStopCommand =
+          lower === 'stop' ||
+          lower === 'sleep' ||
+          lower === 'go to sleep' ||
+          lower === 'stop listening' ||
+          lower === 'ok done' ||
+          lower === 'okay done' ||
+          lower === 'all done' ||
+          lower === 'done' ||
+          lower === 'bas' ||
+          lower === 'ho gaya' ||
+          lower === 'khatam' ||
+          lower === 'podhum' ||
+          lower === 'mudinjadhu';
 
-        if (isImmediateStop) {
+        if (isStopCommand) {
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
@@ -335,13 +329,12 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Snappy Speech Debounce (800ms): executes as soon as user stops speaking
+        // Snappy Speech Debounce (900ms)
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
             setLiveTranscript('');
             latestTranscriptRef.current = '';
-            // Reset speech accumulation buffer so previous words never contaminate next command
             speechService.clearCurrentTranscript();
             if (!isHandsFree) {
               speechService.stopListening();
@@ -349,7 +342,7 @@ export const App: React.FC = () => {
             }
             executeCommand(finalCmd);
           }
-        }, 800);
+        }, 900);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });
@@ -382,7 +375,7 @@ export const App: React.FC = () => {
     if (nextState) {
       startListeningSession();
       if (!isMuted) {
-        speechService.speak('Hands-free mode active. I am listening continuously. You can speak any command directly.', selectedLanguage.speechCode);
+        speechService.speak('Hands-free mode active. I am listening continuously.', selectedLanguage.speechCode);
       }
     } else {
       if (silenceTimerRef.current) {
@@ -421,57 +414,25 @@ export const App: React.FC = () => {
     } catch (e) {}
   }, [messages]);
 
-  const hasGreetedOnMountRef = useRef(false);
-
-  // Automatic Voice Welcome Greeting on Site Open (Runs Strictly Once on Initial Mount)
+  // 3-Second Launch Greeting (Strictly Once on Initial Mount)
   useEffect(() => {
-    if (hasGreetedOnMountRef.current) return;
-    hasGreetedOnMountRef.current = true;
+    if (hasGreetedRef.current) return;
+    hasGreetedRef.current = true;
 
     const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
 
-    const triggerWelcomeSpeech = async () => {
+    const triggerGreeting = async () => {
       await speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
       startListeningSession();
     };
 
-    // 1. Direct speech attempt on mount with 3 second delay for smooth page loading
+    // 3 second delay on initial load
     const timer = setTimeout(() => {
-      triggerWelcomeSpeech();
+      triggerGreeting();
     }, 3000);
 
-    // 2. User interaction fallback (handles browser autoplay restriction policies)
-    const onFirstUserAction = () => {
-      window.removeEventListener('click', onFirstUserAction);
-      window.removeEventListener('keydown', onFirstUserAction);
-      window.removeEventListener('touchstart', onFirstUserAction);
-      triggerWelcomeSpeech();
-    };
-
-    window.addEventListener('click', onFirstUserAction, { once: true });
-    window.addEventListener('keydown', onFirstUserAction, { once: true });
-    window.addEventListener('touchstart', onFirstUserAction, { once: true });
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('click', onFirstUserAction);
-      window.removeEventListener('keydown', onFirstUserAction);
-      window.removeEventListener('touchstart', onFirstUserAction);
-    };
-  }, []);
-
-  // Hands-Free Continuous Keep-Alive Watchdog
-  useEffect(() => {
-    if (!isHandsFree) return;
-
-    const interval = setInterval(() => {
-      if (isHandsFree && !speechService.getIsListening()) {
-        startListeningSession();
-      }
-    }, 800);
-
-    return () => clearInterval(interval);
-  }, [isHandsFree, startListeningSession]);
+    return () => clearTimeout(timer);
+  }, []); // Run ONCE on mount only
 
   const handleToggleComplete = (id: string) => {
     setItems((prev) =>
@@ -577,7 +538,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F8F5] dark:bg-[#111215] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-[#1E3A8A] selection:text-white scroll-smooth">
       
-      {/* Top Header matching V-Cart from sketch */}
+      {/* Top Header */}
       <Navbar
         selectedLang={selectedLanguage.speechCode}
         onLanguageChange={(lang) => {
@@ -602,18 +563,16 @@ export const App: React.FC = () => {
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
       />
 
-      {/* Main Container matching the User's Hand-Drawn Sketch */}
+      {/* Main Container */}
       <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1">
         
         {/* Main 2-Column Blueprint Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* ========================================================= */}
-          {/* LEFT MAIN AREA (8 Cols / 67%): HERO (Time + Orb) + [CHAT & RECOMEDS] */}
-          {/* ========================================================= */}
+          {/* LEFT MAIN AREA (8 Cols / 67%): HERO + [CHAT & RECOMEDS] */}
           <div className="lg:col-span-8 space-y-6">
             
-            {/* 1. TOP HERO SECTION: Time/Date box on left + 3D Orb in center (From Sketch) */}
+            {/* 1. TOP HERO SECTION */}
             <div>
               <CenterHeroStage
                 liveTranscript={liveTranscript}
@@ -631,10 +590,10 @@ export const App: React.FC = () => {
               />
             </div>
 
-            {/* 2. BOTTOM 2-COLUMN ROW (From Sketch): Left = CHAT, Right = RECOMEDS */}
+            {/* 2. BOTTOM 2-COLUMN ROW: Left = CHAT, Right = RECOMEDS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               
-              {/* CHAT Box (From Sketch) */}
+              {/* CHAT Box */}
               <div className="flex flex-col">
                 <InteractionFeedCard
                   messages={messages}
@@ -658,7 +617,7 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* RECOMEDS Box (From Sketch) */}
+              {/* RECOMEDS Box */}
               <div className="flex flex-col">
                 <CompactSuggestionsWidget
                   suggestions={suggestions}
@@ -671,9 +630,7 @@ export const App: React.FC = () => {
 
           </div>
 
-          {/* ========================================================= */}
-          {/* RIGHT SIDEBAR (4 Cols / 33%): Dedicated CART            */}
-          {/* ========================================================= */}
+          {/* RIGHT SIDEBAR (4 Cols / 33%): Dedicated CART */}
           <div className="lg:col-span-4 space-y-6">
             <ShoppingListView
               items={items}
@@ -718,7 +675,6 @@ export const App: React.FC = () => {
         isOpen={isSyncOpen}
         onClose={() => setIsSyncOpen(false)}
         onRefreshPrices={() => {
-          // Re-evaluate prices for items in cart based on live rates
           setItems((prev) =>
             prev.map((item) => {
               const livePrice = livePricingService.getPriceForKeyword(item.name);
