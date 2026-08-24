@@ -12,6 +12,9 @@ import { CompactSuggestionsWidget } from './components/CompactSuggestionsWidget'
 import { ShoppingListView } from './components/ShoppingListView';
 import { SearchModal } from './components/SearchModal';
 import { CommandHelpModal } from './components/CommandHelpModal';
+import { SyncDeviceModal } from './components/SyncDeviceModal';
+import { userPreferenceService } from './services/userPreferenceService';
+import { livePricingService } from './services/livePricingService';
 
 const STORAGE_KEY = 'voice_cart_items_v7';
 const CHAT_STORAGE_KEY = 'voice_cart_chat_v7';
@@ -125,6 +128,7 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMaxPrice, setSearchMaxPrice] = useState<number | undefined>(undefined);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   // Persist items
   useEffect(() => {
@@ -450,6 +454,7 @@ export const App: React.FC = () => {
           speechService.setMuted(next);
         }}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenSync={() => setIsSyncOpen(true)}
         itemCount={items.length}
         totalPrice={totalPrice}
         activeView={activeView}
@@ -569,6 +574,21 @@ export const App: React.FC = () => {
       <CommandHelpModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+      />
+
+      {/* Cross-Device Sync & Live Mandi Pricing Modal */}
+      <SyncDeviceModal
+        isOpen={isSyncOpen}
+        onClose={() => setIsSyncOpen(false)}
+        onRefreshPrices={() => {
+          // Re-evaluate prices for items in cart based on live rates
+          setItems((prev) =>
+            prev.map((item) => {
+              const livePrice = livePricingService.getPriceForKeyword(item.name);
+              return livePrice ? { ...item, price: livePrice } : item;
+            })
+          );
+        }}
       />
 
     </div>
