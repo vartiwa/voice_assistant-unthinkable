@@ -366,6 +366,19 @@ export const App: React.FC = () => {
     }
   };
 
+  // Hands-Free Continuous Keep-Alive Watchdog
+  useEffect(() => {
+    if (!isHandsFree) return;
+
+    const interval = setInterval(() => {
+      if (isHandsFree && !speechService.getIsListening()) {
+        startListeningSession();
+      }
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [isHandsFree, startListeningSession]);
+
   const handleToggleComplete = (id: string) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))

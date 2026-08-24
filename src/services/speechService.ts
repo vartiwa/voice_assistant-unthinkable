@@ -1,78 +1,64 @@
 import { LanguageOption } from '../types';
 
-export const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'en-IN', name: 'English (India)', nativeName: 'English (India)', flag: '🇮🇳', speechCode: 'en-IN' },
-  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', speechCode: 'hi-IN' },
-  { code: 'ta-IN', name: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳', speechCode: 'ta-IN' },
-  { code: 'en-US', name: 'English (US)', nativeName: 'English (US)', flag: '🇺🇸', speechCode: 'en-US' },
-  { code: 'en-GB', name: 'English (UK)', nativeName: 'English (UK)', flag: '🇬🇧', speechCode: 'en-GB' },
-  { code: 'es-ES', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', speechCode: 'es-ES' },
-  { code: 'fr-FR', name: 'French', nativeName: 'Français', flag: '🇫🇷', speechCode: 'fr-FR' },
-  { code: 'de-DE', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', speechCode: 'de-DE' },
-];
-
 export interface SpeechRecognitionHandlers {
-  onResult: (transcript: string, isFinal: boolean) => void;
-  onError: (error: string) => void;
   onStart: () => void;
   onEnd: () => void;
+  onResult: (transcript: string, isFinal?: boolean) => void;
+  onError: (error: string) => void;
   onAudioLevel?: (level: number) => void;
 }
 
-export const isSpeechRecognitionSupported = (): boolean => {
-  return typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
-};
-
-type SpeechRecognitionType = any;
+export const SUPPORTED_LANGUAGES: LanguageOption[] = [
+  { code: 'en', speechCode: 'en-IN', name: 'English (India)', flag: '🇮🇳' },
+  { code: 'hi', speechCode: 'hi-IN', name: 'हिन्दी (Hindi)', flag: '🇮🇳' },
+  { code: 'ta', speechCode: 'ta-IN', name: 'தமிழ் (Tamil)', flag: '🇮🇳' },
+  { code: 'en-US', speechCode: 'en-US', name: 'English (US)', flag: '🇺🇸' },
+  { code: 'en-GB', speechCode: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
+  { code: 'es', speechCode: 'es-ES', name: 'Español', flag: '🇪🇸' },
+  { code: 'fr', speechCode: 'fr-FR', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', speechCode: 'de-DE', name: 'Deutsch', flag: '🇩🇪' },
+];
 
 class SpeechService {
-  private recognition: SpeechRecognitionType | null = null;
+  private recognition: any = null;
   private isListening: boolean = false;
   private currentLanguage: string = 'en-IN';
-  private audioContext: AudioContext | null = null;
-  private mediaStream: MediaStream | null = null;
-  private analyser: AnalyserNode | null = null;
-  private animFrameId: number | null = null;
   private ttsMuted: boolean = false;
-  private isSpeakingTTS: boolean = false;
   private activeHandlers: SpeechRecognitionHandlers | null = null;
-  private restartTimeout: any = null;
-  
-  // Persistent reference to prevent Chrome garbage-collection speech cutoff
+  private restartTimeout: NodeJS.Timeout | null = null;
+  private audioContext: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
+  private visualizerStream: MediaStream | null = null;
+  private visualizerAnimFrame: number | null = null;
+  private isSpeakingTTS: boolean = false;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
-  private cachedVoices: SpeechSynthesisVoice[] = [];
-  private speechKeepAliveInterval: any = null;
+  private speechKeepAliveInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.initRecognition();
-    this.initVoices();
-  }
-
-  private initVoices() {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    const loadVoices = () => {
-      this.cachedVoices = window.speechSynthesis.getVoices();
-    };
-
-    loadVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
   }
 
   private initRecognition() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return null;
 
-    const SpeechRecognitionAPI =
+    const SpeechRecognitionClass =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (SpeechRecognitionAPI) {
-      this.recognition = new SpeechRecognitionAPI();
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.maxAlternatives = 1;
-      this.recognition.lang = this.currentLanguage;
+    if (!SpeechRecognitionClass) {
+      return null;
+    }
+
+    try {
+      const rec = new SpeechRecognitionClass();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      rec.lang = this.currentLanguage;
+      this.recognition = rec;
+      return rec;
+    } catch (e) {
+      console.warn('SpeechRecognition initialization error:', e);
+      return null;
     }
   }
 
@@ -121,6 +107,7 @@ class SpeechService {
     };
 
     this.recognition.onresult = (event: any) => {
+      // Don't process recognition while TTS voice is speaking feedback
       if (this.isSpeakingTTS) return;
 
       let fullTranscript = '';
@@ -141,11 +128,11 @@ class SpeechService {
     };
 
     this.recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech') {
+      if (event.error === 'no-speech' || event.error === 'aborted') {
         // Normal pause - continuous loop keeps running
-        return;
-      }
-      if (event.error === 'aborted') {
+        if (this.isListening && !this.isSpeakingTTS) {
+          this.safeRestartRecognition();
+        }
         return;
       }
 
@@ -156,8 +143,6 @@ class SpeechService {
         this.stopAudioVisualizer();
         if (this.activeHandlers) this.activeHandlers.onError(msg);
         return;
-      } else if (event.error === 'network') {
-        msg = 'Network connection issue with speech service.';
       }
 
       if (this.isListening && !this.isSpeakingTTS) {
@@ -166,8 +151,8 @@ class SpeechService {
     };
 
     this.recognition.onend = () => {
-      // Auto-restart if listening is active and not currently playing TTS
-      if (this.isListening && !this.isSpeakingTTS && this.activeHandlers) {
+      // Auto-restart if listening is active
+      if (this.isListening && this.activeHandlers) {
         this.safeRestartRecognition();
         return;
       }
@@ -180,24 +165,31 @@ class SpeechService {
 
     try {
       this.recognition.start();
-    } catch (e) {
-      this.safeRestartRecognition();
+    } catch (e: any) {
+      if (e.name !== 'InvalidStateError') {
+        this.safeRestartRecognition();
+      }
     }
   }
 
-  private safeRestartRecognition() {
+  public safeRestartRecognition() {
     if (this.restartTimeout) {
       clearTimeout(this.restartTimeout);
     }
     this.restartTimeout = setTimeout(() => {
-      if (this.isListening && !this.isSpeakingTTS && this.recognition) {
-        try {
-          this.recognition.start();
-        } catch (e) {
-          // Already started or busy
+      if (this.isListening && !this.isSpeakingTTS) {
+        if (!this.recognition) {
+          this.initRecognition();
+        }
+        if (this.recognition) {
+          try {
+            this.recognition.start();
+          } catch (e: any) {
+            // Already started or busy, which is fine
+          }
         }
       }
-    }, 300);
+    }, 150);
   }
 
   public stopListening() {
@@ -233,130 +225,110 @@ class SpeechService {
         this.audioContext.resume();
       }
 
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          this.mediaStream = stream;
-          if (!this.audioContext) return;
+      if (!this.visualizerStream) {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            this.visualizerStream = stream;
+            if (!this.audioContext) return;
+            const source = this.audioContext.createMediaStreamSource(stream);
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = 64;
+            this.analyser.smoothingTimeConstant = 0.8;
+            source.connect(this.analyser);
 
-          const source = this.audioContext.createMediaStreamSource(stream);
-          this.analyser = this.audioContext.createAnalyser();
-          this.analyser.fftSize = 256;
-          this.analyser.smoothingTimeConstant = 0.8;
-          source.connect(this.analyser);
+            const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
-          const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            const updateLoop = () => {
+              if (!this.isListening) return;
+              if (this.analyser) {
+                this.analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                  sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+                const normalized = Math.min(100, Math.round((average / 128) * 100));
+                onAudioLevel(normalized);
+              }
+              this.visualizerAnimFrame = requestAnimationFrame(updateLoop);
+            };
 
-          const updateVolume = () => {
-            if (!this.analyser || !this.isListening) {
-              if (onAudioLevel) onAudioLevel(0);
-              return;
-            }
-
-            this.analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              sum += dataArray[i];
-            }
-            const average = sum / dataArray.length;
-            const normalized = Math.min(100, Math.round((average / 128) * 100));
-
-            onAudioLevel(normalized);
-            this.animFrameId = requestAnimationFrame(updateVolume);
-          };
-
-          updateVolume();
-        })
-        .catch(() => {
-          // Mic visualizer fallback
-        });
-    } catch (e) {}
+            this.visualizerAnimFrame = requestAnimationFrame(updateLoop);
+          })
+          .catch((_err) => {
+            // Simulated audio heartbeat if mic stream blocked
+            let simulatedLevel = 25;
+            const simulateLoop = () => {
+              if (!this.isListening) return;
+              simulatedLevel = 20 + Math.sin(Date.now() / 200) * 15;
+              onAudioLevel(Math.round(simulatedLevel));
+              this.visualizerAnimFrame = requestAnimationFrame(simulateLoop);
+            };
+            this.visualizerAnimFrame = requestAnimationFrame(simulateLoop);
+          });
+      }
+    } catch (e) {
+      console.warn('Audio Visualizer setup error:', e);
+    }
   }
 
   private stopAudioVisualizer() {
-    if (this.animFrameId) {
-      cancelAnimationFrame(this.animFrameId);
-      this.animFrameId = null;
+    if (this.visualizerAnimFrame) {
+      cancelAnimationFrame(this.visualizerAnimFrame);
+      this.visualizerAnimFrame = null;
     }
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach((track) => track.stop());
-      this.mediaStream = null;
-    }
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close();
-      this.audioContext = null;
+    if (this.visualizerStream) {
+      this.visualizerStream.getTracks().forEach((track) => track.stop());
+      this.visualizerStream = null;
     }
   }
 
-  // Pure Female Voice Selection across Windows, macOS, Android, iOS, Chrome, Edge
+  // Voice Selection for Indian English, Hindi, Tamil & International
   private getBestFemaleVoice(langCode: string): SpeechSynthesisVoice | null {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-    
-    const voices = this.cachedVoices.length > 0 
-      ? this.cachedVoices 
-      : window.speechSynthesis.getVoices();
 
+    const voices = window.speechSynthesis.getVoices();
     if (!voices || voices.length === 0) return null;
 
-    const shortLang = langCode.substring(0, 2).toLowerCase();
-    const exactLang = langCode.toLowerCase().replace('_', '-');
-
-    // Known male voice keywords to strictly reject
-    const maleBlacklist = [
-      'david', 'george', 'mark', 'male', 'ravi', 'guy', 'richard', 
-      'stefan', 'paul', 'james', 'thomas', 'daniel', 'oliver', 'alex'
+    const femaleKeywords = [
+      'female', 'zira', 'kavya', 'sangeeta', 'heera', 'swara', 'veena',
+      'priya', 'neerja', 'ananya', 'geeta', 'samantha', 'victoria', 
+      'karen', 'moira', 'tessa', 'helena', 'catherine', 'hazel', 'susan', 
+      'serena', 'luciana', 'amira', 'monica', 'paulina', 'clara', 'marta', 
+      'julie', 'celine', 'hortense', 'lea', 'hedda', 'marlene', 'vicki'
     ];
 
-    // Priority female voice engines
-    const femalePriority = [
-      'zira', 'samantha', 'victoria', 'karen', 'moira', 'fiona', 'tessa',
-      'heera', 'swara', 'veena', 'sangeeta', 'priya', 'female', 'woman',
-      'google uk english female', 'google us english', 'google हिन्दी', 'google தமிழ்',
-      'natural (female)', 'online (natural) - english'
-    ];
+    const isFemaleName = (name: string) => {
+      const lower = name.toLowerCase();
+      return femaleKeywords.some((kw) => lower.includes(kw));
+    };
 
-    // 1. Filter voices in target language
-    const langVoices = voices.filter((v) => {
-      const vLang = v.lang.toLowerCase().replace('_', '-');
-      return vLang === exactLang || vLang.startsWith(shortLang);
+    // 1. Language + Female exact match
+    const langFemales = voices.filter((v) => {
+      const langMatches = v.lang.toLowerCase().replace('_', '-').startsWith(langCode.toLowerCase().split('-')[0]);
+      return langMatches && isFemaleName(v.name);
     });
+    if (langFemales.length > 0) return langFemales[0];
 
-    // Search in target language first
-    if (langVoices.length > 0) {
-      // Find top female priority
-      for (const keyword of femalePriority) {
-        const found = langVoices.find((v) => {
-          const name = v.name.toLowerCase();
-          const isBlacklisted = maleBlacklist.some((m) => name.includes(m));
-          return !isBlacklisted && name.includes(keyword);
-        });
-        if (found) return found;
-      }
-
-      // Any non-male voice in target language
-      const nonMale = langVoices.find((v) => {
-        const name = v.name.toLowerCase();
-        return !maleBlacklist.some((m) => name.includes(m));
-      });
-      if (nonMale) return nonMale;
-    }
-
-    // 2. Global fallback to female voice
-    for (const keyword of femalePriority) {
-      const found = voices.find((v) => {
-        const name = v.name.toLowerCase();
-        const isBlacklisted = maleBlacklist.some((m) => name.includes(m));
-        return !isBlacklisted && name.includes(keyword);
-      });
-      if (found) return found;
-    }
-
-    // 3. Any non-male voice globally
-    const safeVoice = voices.find((v) => {
-      const name = v.name.toLowerCase();
-      return !maleBlacklist.some((m) => name.includes(m));
+    // 2. Language match
+    const langMatches = voices.filter((v) => {
+      return v.lang.toLowerCase().replace('_', '-').startsWith(langCode.toLowerCase().split('-')[0]);
     });
+    if (langMatches.length > 0) return langMatches[0];
 
+    // 3. Indian English / Global female voice fallback
+    const indianFemales = voices.filter((v) => 
+      v.lang.toLowerCase().includes('en-in') || 
+      (v.lang.toLowerCase().includes('en') && isFemaleName(v.name))
+    );
+    if (indianFemales.length > 0) return indianFemales[0];
+
+    // 4. Any female voice
+    const anyFemale = voices.find((v) => isFemaleName(v.name));
+    if (anyFemale) return anyFemale;
+
+    const safeVoice = voices.find((v) => !v.name.toLowerCase().includes('david') && !v.name.toLowerCase().includes('george') && !v.name.toLowerCase().includes('mark') && !v.name.toLowerCase().includes('male'));
     return safeVoice || voices[0] || null;
   }
 
@@ -396,13 +368,6 @@ class SpeechService {
       this.stopSpeaking();
       this.isSpeakingTTS = true;
 
-      // Pause speech recognition while speaking to prevent feedback echo loops
-      if (this.recognition && this.isListening) {
-        try {
-          this.recognition.stop();
-        } catch (e) {}
-      }
-
       const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
       this.activeUtterance = utterance; // Strong reference prevents GC cutoff!
 
@@ -436,23 +401,22 @@ class SpeechService {
         this.isSpeakingTTS = false;
         this.activeUtterance = null;
 
-        // Restart recognition cleanly after speaking
+        // Auto-resume recognition smoothly after speaking finishes
         if (this.isListening && this.activeHandlers) {
           setTimeout(() => {
             this.safeRestartRecognition();
-          }, 200);
+          }, 150);
         }
 
         resolve();
       };
 
       utterance.onend = cleanupAndResolve;
-      utterance.onerror = (err) => {
-        // Ignore aborted errors
+      utterance.onerror = (_err) => {
         cleanupAndResolve();
       };
 
-      // Speak with a tiny 30ms delay to let the audio buffer stabilize
+      // Speak with a tiny delay to let the audio buffer stabilize
       setTimeout(() => {
         try {
           window.speechSynthesis.speak(utterance);
@@ -477,43 +441,47 @@ class SpeechService {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
         gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.2);
+        osc.stop(now + 0.13);
       } else if (type === 'success') {
-        const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 triad
-        freqs.forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          const noteTime = now + idx * 0.06;
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, noteTime);
-          gain.gain.setValueAtTime(0.06, noteTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.18);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(noteTime);
-          osc.stop(noteTime + 0.2);
-        });
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, now); // C5
+        osc2.frequency.setValueAtTime(659.25, now + 0.08); // E5
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.1);
+        osc2.start(now + 0.08);
+        osc2.stop(now + 0.23);
       } else if (type === 'cancel') {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now); // A4
-        osc.frequency.exponentialRampToValueAtTime(349.23, now + 0.12); // F4
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.16);
+        osc.stop(now + 0.13);
       }
-    } catch (e) {}
+    } catch (e) {
+      // AudioContext policy fallback
+    }
   }
 }
 
