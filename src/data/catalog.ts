@@ -1,131 +1,237 @@
 import { CatalogProduct, Category } from '../types';
 
 export const PRODUCT_CATALOG: CatalogProduct[] = [
-  // Produce
+  // Indian Essentials & Produce
   {
-    id: 'prod-1',
-    name: 'Organic Honeycrisp Apples',
+    id: 'prod-in-1',
+    name: 'Fresh Shimla Apples',
     category: 'Produce',
-    brand: 'FreshFarm Organic',
-    price: 3.99,
-    unit: 'lb',
+    brand: 'Shimla Fresh',
+    price: 140,
+    unit: 'kg',
     imageIcon: '🍎',
     isOrganic: true,
     isVegan: true,
     inSeason: true,
     seasonName: 'Autumn',
-    substitutes: ['Fuji Apples', 'Gala Apples', 'Pears']
+    substitutes: ['Kinnow', 'Pears']
   },
   {
-    id: 'prod-2',
-    name: 'Fresh Bananas',
+    id: 'prod-in-2',
+    name: 'Fresh Robusta Bananas',
     category: 'Produce',
-    brand: 'Chiquita',
-    price: 0.69,
-    unit: 'lb',
+    brand: 'Farm Fresh',
+    price: 50,
+    unit: 'dozen',
     imageIcon: '🍌',
     isVegan: true,
     inSeason: true,
     seasonName: 'Year-round',
-    substitutes: ['Plantains', 'Apples']
+    substitutes: ['Elaichi Bananas']
   },
   {
-    id: 'prod-3',
-    name: 'Fresh Strawberries',
+    id: 'prod-in-3',
+    name: 'Fresh Country Tomatoes',
     category: 'Produce',
-    brand: 'Driscoll\'s',
-    price: 4.49,
-    unit: 'pack',
-    imageIcon: '🍓',
-    isVegan: true,
-    inSeason: true,
-    seasonName: 'Spring',
-    onSale: true,
-    originalPrice: 5.99,
-    substitutes: ['Blueberries', 'Raspberries']
-  },
-  {
-    id: 'prod-4',
-    name: 'Organic Baby Spinach',
-    category: 'Produce',
-    brand: 'Earthbound Farm',
-    price: 2.99,
-    unit: 'pack',
-    imageIcon: '🥬',
-    isOrganic: true,
-    isVegan: true,
-    inSeason: true,
-    seasonName: 'Year-round',
-    substitutes: ['Kale', 'Arugula']
-  },
-  {
-    id: 'prod-5',
-    name: 'Fresh Hass Avocados',
-    category: 'Produce',
-    brand: 'Avocados from Mexico',
-    price: 1.25,
-    unit: 'item',
-    imageIcon: '🥑',
-    isVegan: true,
-    inSeason: true,
-    seasonName: 'Year-round',
-    onSale: true,
-    originalPrice: 1.75,
-    substitutes: ['Guacamole Pack']
-  },
-  {
-    id: 'prod-6',
-    name: 'Roma Tomatoes',
-    category: 'Produce',
-    brand: 'Local Farm',
-    price: 1.99,
-    unit: 'lb',
+    brand: 'Local Mandi',
+    price: 35,
+    unit: 'kg',
     imageIcon: '🍅',
     isVegan: true,
     inSeason: true,
-    seasonName: 'Summer',
-    substitutes: ['Vine Ripe Tomatoes', 'Canned Diced Tomatoes']
+    seasonName: 'Year-round',
+    substitutes: ['Hybrid Tomatoes']
   },
   {
-    id: 'prod-7',
-    name: 'Sweet Oranges',
+    id: 'prod-in-4',
+    name: 'Fresh Nasik Red Onions',
     category: 'Produce',
-    brand: 'Sunkist',
-    price: 4.99,
-    unit: 'bag',
-    imageIcon: '🍊',
+    brand: 'Nasik Mandi',
+    price: 40,
+    unit: 'kg',
+    imageIcon: '🧅',
     isVegan: true,
     inSeason: true,
-    seasonName: 'Winter',
-    substitutes: ['Mandarins', 'Grapefruit']
+    seasonName: 'Year-round',
+    substitutes: ['White Onions']
+  },
+  {
+    id: 'prod-in-5',
+    name: 'Fresh Potatoes',
+    category: 'Produce',
+    brand: 'Local Mandi',
+    price: 30,
+    unit: 'kg',
+    imageIcon: '🥔',
+    isVegan: true,
+    inSeason: true,
+    seasonName: 'Year-round',
+    substitutes: ['Baby Potatoes']
   },
 
-  // Dairy & Eggs
+  // Dairy & Everyday
   {
-    id: 'dairy-1',
-    name: 'Whole Milk (Gallon)',
+    id: 'dairy-in-1',
+    name: 'Amul Taaza Fresh Toned Milk',
     category: 'Dairy & Eggs',
-    brand: 'Horizon Organic',
-    price: 4.89,
-    unit: 'gallon',
+    brand: 'Amul',
+    price: 32,
+    unit: 'packet',
     imageIcon: '🥛',
-    isOrganic: true,
-    substitutes: ['Almond Milk Unsweetened', 'Oat Milk Creamy', 'Lactose-Free Whole Milk']
+    substitutes: ['Amul Gold Milk', 'Mother Dairy Toned Milk']
   },
   {
-    id: 'dairy-2',
-    name: 'Almond Milk Unsweetened',
+    id: 'dairy-in-2',
+    name: 'Amul Gold Full Cream Milk',
     category: 'Dairy & Eggs',
-    brand: 'Silk',
-    price: 3.49,
-    unit: 'carton',
+    brand: 'Amul',
+    price: 35,
+    unit: 'packet',
     imageIcon: '🥛',
-    isVegan: true,
-    isDairyFree: true,
-    isGlutenFree: true,
-    onSale: true,
-    originalPrice: 4.19,
-    substitutes: ['Whole Milk (Gallon)', 'Oat Milk Creamy', 'Soy Milk']
+    substitutes: ['Mother Dairy Full Cream Milk']
+  },
+  {
+    id: 'dairy-in-3',
+    name: 'Amul Fresh Malai Paneer',
+    category: 'Dairy & Eggs',
+    brand: 'Amul',
+    price: 95,
+    unit: 'packet',
+    imageIcon: '🧀',
+    substitutes: ['Mother Dairy Paneer', 'Tofu']
+  },
+  {
+    id: 'dairy-in-4',
+    name: 'Mother Dairy Fresh Dahi Curd',
+    category: 'Dairy & Eggs',
+    brand: 'Mother Dairy',
+    price: 35,
+    unit: 'tub',
+    imageIcon: '🥣',
+    substitutes: ['Greek Yogurt']
+  },
+  {
+    id: 'dairy-in-5',
+    name: 'Farm Fresh Organic Eggs',
+    category: 'Dairy & Eggs',
+    brand: 'Eggoz',
+    price: 84,
+    unit: 'dozen',
+    imageIcon: '🥚',
+    isOrganic: true,
+    substitutes: ['Brown Eggs']
+  },
+  {
+    id: 'dairy-in-6',
+    name: 'Amul Butter Salted',
+    category: 'Dairy & Eggs',
+    brand: 'Amul',
+    price: 58,
+    unit: 'pack',
+    imageIcon: '🧈',
+    substitutes: ['Amul Lite']
+  },
+
+  // Pantry Staples
+  {
+    id: 'pantry-in-1',
+    name: 'Aashirvaad Superior MP Whole Wheat Atta',
+    category: 'Pantry',
+    brand: 'Aashirvaad',
+    price: 240,
+    unit: 'kg',
+    imageIcon: '🌾',
+    substitutes: ['Fortune Chakki Fresh Atta', 'Multigrain Atta']
+  },
+  {
+    id: 'pantry-in-2',
+    name: 'India Gate Basmati Rice Premium',
+    category: 'Pantry',
+    brand: 'India Gate',
+    price: 120,
+    unit: 'kg',
+    imageIcon: '🍚',
+    substitutes: ['Daawat Rozana Basmati Rice']
+  },
+  {
+    id: 'pantry-in-3',
+    name: 'Tata Sampann Unpolished Toor Dal',
+    category: 'Pantry',
+    brand: 'Tata Sampann',
+    price: 145,
+    unit: 'kg',
+    imageIcon: '🫘',
+    substitutes: ['Moong Dal']
+  },
+  {
+    id: 'pantry-in-4',
+    name: 'Fortune Sunlite Refined Sunflower Oil',
+    category: 'Pantry',
+    brand: 'Fortune',
+    price: 140,
+    unit: 'litre',
+    imageIcon: '🫗',
+    substitutes: ['Dhara Mustard Oil', 'Saffola Gold']
+  },
+  {
+    id: 'pantry-in-5',
+    name: 'Madhur Pure & Hygienic Sugar',
+    category: 'Pantry',
+    brand: 'Madhur',
+    price: 44,
+    unit: 'kg',
+    imageIcon: '🧂',
+    substitutes: ['Organic Jaggery']
+  },
+  {
+    id: 'pantry-in-6',
+    name: 'Tata Salt Vacuum Evaporated Iodized',
+    category: 'Pantry',
+    brand: 'Tata Salt',
+    price: 25,
+    unit: 'packet',
+    imageIcon: '🧂',
+    substitutes: ['Rock Salt']
+  },
+  {
+    id: 'pantry-in-7',
+    name: 'Maggi 2-Minute Masala Instant Noodles',
+    category: 'Pantry',
+    brand: 'Maggi',
+    price: 14,
+    unit: 'pack',
+    imageIcon: '🍜',
+    substitutes: ['Yippee Noodles', 'Top Ramen']
+  },
+  {
+    id: 'pantry-in-8',
+    name: 'Tata Tea Premium Desh Ki Chai',
+    category: 'Beverages',
+    brand: 'Tata Tea',
+    price: 110,
+    unit: 'pack',
+    imageIcon: '☕',
+    substitutes: ['Red Label Tea', 'Tata Tea Gold']
+  },
+  {
+    id: 'pantry-in-9',
+    name: 'Parle-G Original Glucose Biscuits',
+    category: 'Snacks',
+    brand: 'Parle',
+    price: 20,
+    unit: 'pack',
+    imageIcon: '🍪',
+    substitutes: ['Britannia Marie Gold']
+  },
+  {
+    id: 'pantry-in-10',
+    name: 'Lay\'s India\'s Magic Masala Potato Chips',
+    category: 'Snacks',
+    brand: 'Lay\'s',
+    price: 20,
+    unit: 'pack',
+    imageIcon: '🥔',
+    substitutes: ['Kurkure Masala Munch']
   },
   {
     id: 'dairy-3',

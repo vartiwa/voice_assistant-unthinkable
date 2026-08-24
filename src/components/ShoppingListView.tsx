@@ -86,7 +86,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = couponApplied ? subtotal * 0.1 : 0;
-  const estimatedTax = (subtotal - discount) * 0.05;
+  const estimatedTax = Math.round((subtotal - discount) * 0.05);
   const totalCost = subtotal - discount + estimatedTax;
   const completedCount = items.filter((i) => i.completed).length;
   const progressPercent = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
@@ -102,13 +102,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     const text = items
       .map(
         (i) =>
-          `[${i.completed ? 'x' : ' '}] ${i.quantity} ${i.unit ? i.unit + ' ' : ''}${i.name} ($${(
+          `[${i.completed ? 'x' : ' '}] ${i.quantity} ${i.unit ? i.unit + ' ' : ''}${i.name} (₹${(
             i.price * i.quantity
-          ).toFixed(2)})`
+          ).toFixed(0)})`
       )
       .join('\n');
 
-    navigator.clipboard.writeText(`Shopping List (${items.length} items - Total: $${totalCost.toFixed(2)}):\n\n${text}`);
+    navigator.clipboard.writeText(`Shopping List (${items.length} items - Total: ₹${totalCost.toFixed(0)}):\n\n${text}`);
     setCopiedNotification(true);
     setTimeout(() => setCopiedNotification(false), 2500);
   };
@@ -116,7 +116,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const handleQuickAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickName.trim()) {
-      onQuickAddItem(quickName.trim(), quickCategory, 3.49);
+      onQuickAddItem(quickName.trim(), quickCategory, 50);
       setQuickName('');
     }
   };
@@ -126,15 +126,23 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   // Emoji helper
   const getProductEmoji = (name: string, category: string) => {
     const n = name.toLowerCase();
-    if (n.includes('apple')) return '🍎';
-    if (n.includes('milk') || n.includes('doodh')) return '🥛';
+    if (n.includes('apple') || n.includes('seb')) return '🍎';
+    if (n.includes('milk') || n.includes('doodh') || n.includes('taaza')) return '🥛';
     if (n.includes('bread') || n.includes('loaf')) return '🍞';
     if (n.includes('earphone') || n.includes('headphone') || n.includes('sony')) return '🎧';
     if (n.includes('paneer') || n.includes('cheese')) return '🧀';
     if (n.includes('atta') || n.includes('flour') || n.includes('wheat')) return '🌾';
-    if (n.includes('egg')) return '🥚';
-    if (n.includes('banana')) return '🍌';
-    if (n.includes('coffee') || n.includes('tea')) return '☕';
+    if (n.includes('egg') || n.includes('anda')) return '🥚';
+    if (n.includes('banana') || n.includes('kela')) return '🍌';
+    if (n.includes('tomato') || n.includes('tamatar')) return '🍅';
+    if (n.includes('onion') || n.includes('pyaz')) return '🧅';
+    if (n.includes('potato') || n.includes('aalu') || n.includes('aloo')) return '🥔';
+    if (n.includes('tea') || n.includes('chai')) return '☕';
+    if (n.includes('maggi') || n.includes('noodle')) return '🍜';
+    if (n.includes('rice') || n.includes('chawal')) return '🍚';
+    if (n.includes('dal') || n.includes('daal')) return '🫘';
+    if (n.includes('oil') || n.includes('tel')) return '🫗';
+    if (n.includes('butter') || n.includes('makhan')) return '🧈';
     if (category === 'Produce') return '🥗';
     if (category === 'Dairy & Eggs') return '🧀';
     if (category === 'Bakery') return '🥐';
@@ -214,7 +222,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search items in cart..."
+                placeholder="Search items in cart (milk, atta, paneer)..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-stone-50 dark:bg-zinc-800/80 border border-stone-200 dark:border-zinc-700 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400"
               />
             </div>
@@ -257,7 +265,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             type="text"
             value={quickName}
             onChange={(e) => setQuickName(e.target.value)}
-            placeholder="Quick add item..."
+            placeholder="Quick add item (e.g. Amul Milk, Atta)..."
             className="flex-1 px-2.5 py-1 text-xs bg-transparent focus:outline-none text-slate-800 dark:text-slate-100"
           />
 
@@ -299,7 +307,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               Your Cart is Empty
             </p>
             <p className="text-xs text-slate-400">
-              Speak: "Hey Assistant, add milk and bread"
+              Speak: "Hey Assistant, add 2 packets milk and atta"
             </p>
           </div>
         ) : (
@@ -322,7 +330,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   </div>
 
                   <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300">
-                    ${deptTotal.toFixed(2)}
+                    ₹{deptTotal.toFixed(0)}
                   </span>
                 </div>
 
@@ -378,7 +386,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                                 )}
                               </div>
                               <span className="text-[10.5px] font-mono text-slate-500 dark:text-slate-400">
-                                ${item.price.toFixed(2)} / {item.unit || 'item'}
+                                ₹{item.price.toFixed(0)} / {item.unit || 'item'}
                               </span>
                             </div>
                           </div>
@@ -403,7 +411,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                               <ArrowRightLeft className="w-3 h-3 text-blue-600" />
                               <span>Dietary Switch:</span>
                             </span>
-                            <span className="font-bold underline">{hasSubstitute.substituteName}</span>
+                            <span className="font-bold underline">{hasSubstitute.substituteName} (₹{hasSubstitute.price})</span>
                           </button>
                         )}
 
@@ -435,7 +443,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
                             {/* Row Subtotal */}
                             <span className="text-sm font-mono font-black text-slate-900 dark:text-white tabular-nums">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ₹{(item.price * item.quantity).toFixed(0)}
                             </span>
                           </div>
                         </div>
@@ -461,12 +469,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
             <span>Subtotal</span>
             <span className="font-mono font-bold text-slate-900 dark:text-white">
-              ${subtotal.toFixed(2)}
+              ₹{subtotal.toFixed(0)}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-            <span>Shipping</span>
+            <span>Delivery Charges</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">
               FREE
             </span>
@@ -476,15 +484,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-bold">
               <span>Voice Promo (10% Off)</span>
               <span className="font-mono">
-                -${discount.toFixed(2)}
+                -₹{discount.toFixed(0)}
               </span>
             </div>
           )}
 
           <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-            <span>Estimated Tax (5%)</span>
+            <span>Estimated GST / Tax (5%)</span>
             <span className="font-mono font-bold text-slate-900 dark:text-white">
-              ${estimatedTax.toFixed(2)}
+              ₹{estimatedTax.toFixed(0)}
             </span>
           </div>
         </div>
@@ -515,7 +523,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             Total Amount
           </span>
           <span className="text-xl font-mono font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
-            ${totalCost.toFixed(2)}
+            ₹{totalCost.toFixed(0)}
           </span>
         </div>
 
@@ -531,7 +539,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         {/* Security badge */}
         <div className="flex items-center justify-center gap-1.5 text-slate-400 text-[10px] font-medium">
           <ShieldCheck className="w-3 h-3 text-emerald-500" />
-          <span>SSL 256-Bit Encrypted Checkout</span>
+          <span>UPI / Cards · SSL 256-Bit Encrypted</span>
         </div>
 
       </div>

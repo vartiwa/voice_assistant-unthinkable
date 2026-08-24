@@ -10,7 +10,9 @@ import {
   RotateCcw, 
   Leaf,
   Activity,
-  Radio
+  Radio,
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 
 interface CenterHeroStageProps {
@@ -47,8 +49,8 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         month: 'short', 
         day: 'numeric' 
       };
-      setCurrentDateStr(now.toLocaleDateString('en-US', options));
-      setCurrentTimeStr(now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+      setCurrentDateStr(now.toLocaleDateString('en-IN', options));
+      setCurrentTimeStr(now.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }));
 
       const currentDay = now.getDate();
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -69,12 +71,16 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
   };
 
   const realCommandExamples = [
-    { label: 'Produce', cmd: 'Add 3 Organic Honeycrisp Apples' },
-    { label: 'Dairy', cmd: 'Add two packets of whole milk' },
-    { label: 'Pantry', cmd: 'Add 1 kg Atta and 2 packets milk' },
-    { label: 'Hindi', cmd: '2 packet paneer aur doodh add karo' },
-    { label: 'Tamil', cmd: '1 kg thakkali and arisi venum' },
-    { label: 'Filter', cmd: 'Find snacks under $5' },
+    { label: 'Dairy', icon: '🥛', cmd: 'Add 2 packets of Amul milk' },
+    { label: 'Produce', icon: '🍎', cmd: 'Add 1 kg Shimla apples' },
+    { label: 'Pantry', icon: '🌾', cmd: 'Add 5 kg Aashirvaad Atta' },
+    { label: 'Veggies', icon: '🍅', cmd: 'Add 1 kg tomatoes and 2 kg potatoes' },
+    { label: 'Breakfast', icon: '🥚', cmd: 'Add 1 dozen eggs and 1 bread' },
+    { label: 'Snacks', icon: '🍪', cmd: 'Add 2 packets Maggi and Parle-G' },
+    { label: 'Tea', icon: '☕', cmd: 'Add Tata Tea and 1 kg sugar' },
+    { label: 'Hindi', icon: '🇮🇳', cmd: '2 packet paneer aur doodh add karo' },
+    { label: 'Tamil', icon: '🇮🇳', cmd: '1 kg thakkali and arisi venum' },
+    { label: 'Budget', icon: '🏷️', cmd: 'Find snacks under ₹50' },
   ];
 
   // Dynamic Equalizer visualizer bars (7 bars)
@@ -143,7 +149,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           <div className="flex flex-col items-start gap-2">
             <div 
               onClick={onToggleListen}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all shadow-xs"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-xs font-semibold cursor-pointer hover:bg-stone-100 dark:hover:bg-zinc-700 transition-all shadow-xs"
             >
               {isListening ? (
                 <div className="flex items-center gap-2.5">
@@ -196,7 +202,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
       {/* Command Input Dock */}
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 shadow-2xs"
+        className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-stone-50 dark:bg-zinc-800/80 border border-stone-200 dark:border-zinc-700 shadow-2xs"
       >
         <button
           type="button"
@@ -213,8 +219,8 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           onChange={(e) => setInputText(e.target.value)}
           placeholder={
             isHandsFree
-              ? 'Say "Hey Assistant, add milk" or type a command...'
-              : 'Speak or type: "Add 2 bottles milk", "Find snacks under $5"...'
+              ? 'Say "Hey Assistant, add 2 packets of milk" or type a command...'
+              : 'Speak or type: "Add 2 packets milk", "Add 5 kg atta", "Find snacks under ₹50"...'
           }
           className="flex-1 bg-transparent px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
         />
@@ -246,21 +252,27 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         </button>
       </form>
 
-      {/* Clean Interactive Prompt Chips */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
-        <span className="text-[10px] font-mono font-bold text-slate-400 mr-0.5 flex items-center gap-1">
-          <Leaf className="w-3 h-3 text-emerald-500" />
-          <span>TRY SPEAKING:</span>
-        </span>
-        {realCommandExamples.map((item, idx) => (
-          <button
-            key={idx}
-            onClick={() => onQuickPrompt(item.cmd)}
-            className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[10.5px] font-medium text-slate-700 dark:text-slate-300 transition-all border border-slate-200/70 dark:border-zinc-700/70 hover:scale-105 active:scale-95"
-          >
-            "{item.cmd}"
-          </button>
-        ))}
+      {/* Things You Can Ask To Add (Showcase of Spoken Examples) */}
+      <div className="space-y-1.5 pt-0.5">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 uppercase tracking-wider">
+            <span>🗣️ THINGS YOU CAN ASK TO ADD:</span>
+          </span>
+          <span className="text-[10px] font-mono text-slate-400">Click any pill to try</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {realCommandExamples.map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => onQuickPrompt(item.cmd)}
+              className="px-2.5 py-1 rounded-xl bg-white hover:bg-stone-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 transition-all border border-stone-200 dark:border-zinc-700 shadow-2xs hover:border-stone-300 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+            >
+              <span>{item.icon}</span>
+              <span>"{item.cmd}"</span>
+            </button>
+          ))}
+        </div>
       </div>
 
     </div>

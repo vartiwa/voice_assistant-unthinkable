@@ -196,7 +196,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right">
                       <span className="text-sm font-black text-slate-900 dark:text-white block">
-                        ${product.price.toFixed(2)}
+                        ₹{product.price.toFixed(0)}
                       </span>
                       <span className="text-[10px] text-slate-400">
                         per {product.unit}

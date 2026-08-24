@@ -104,8 +104,8 @@ export const CommandHelpModal: React.FC<CommandHelpModalProps> = ({ isOpen, onCl
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { say: '"Find toothpaste under $5"', desc: 'Filters products priced under $5.00' },
-                { say: '"Find earphones under 500 rupees"', desc: 'Recognizes Indian Rupees / Rs filter' },
+                { say: '"Find snacks under ₹50"', desc: 'Filters products priced under ₹50' },
+                { say: '"Find earphones under 500 rupees"', desc: 'Recognizes Indian Rupees / Rs / ₹ filter' },
                 { say: '"Show seasonal items"', desc: 'Opens peak harvest recommendations' },
                 { say: '"What is on sale?"', desc: 'Opens weekly discounts & flyer deals' },
               ].map((ex, i) => (

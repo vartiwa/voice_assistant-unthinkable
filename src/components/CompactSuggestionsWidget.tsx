@@ -60,7 +60,7 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
                     </span>
                     <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5">
                       <span className="font-bold text-slate-800 dark:text-slate-200">
-                        ${sug.item.price.toFixed(2)}
+                        ₹{sug.item.price.toFixed(0)}
                       </span>
                       <span>· {sug.reason}</span>
                     </div>
@@ -108,7 +108,7 @@ export const CompactSuggestionsWidget: React.FC<CompactSuggestionsWidgetProps> =
                     </span>
                     <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5">
                       <span className="font-bold text-slate-800 dark:text-slate-200">
-                        ${sug.item.price.toFixed(2)}
+                        ₹{sug.item.price.toFixed(0)}
                       </span>
                       <span>· {sug.badge}</span>
                     </div>

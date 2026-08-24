@@ -8,30 +8,30 @@ export const INITIAL_SMART_SUGGESTIONS: SmartSuggestion[] = [
     title: 'Running Low Alert',
     description: "It looks like you're running low on Whole Wheat Bread based on your weekly routine.",
     badge: 'Routine Reorder',
-    reason: 'Last purchased 6 days ago',
+    reason: 'Last purchased 5 days ago',
     item: {
-      name: 'Whole Wheat Sandwich Bread',
+      name: 'Fresh Whole Wheat Bread',
       category: 'Bakery',
       quantity: 1,
       unit: 'loaf',
-      price: 3.29,
-      brand: "Nature's Own"
+      price: 45,
+      brand: "Britannia"
     }
   },
   {
     id: 'sug-hist-2',
     type: 'history',
     title: 'Frequently Bought Together',
-    description: 'You often purchase Fresh Hass Avocados and Roma Tomatoes for weekend meals.',
+    description: 'You often purchase Fresh Dahi Curd and Fresh Paneer together for meals.',
     badge: 'Favorite Pair',
-    reason: 'Bought together in 4 of your last 5 trips',
+    reason: 'Bought together in 4 of your last 5 orders',
     item: {
-      name: 'Fresh Hass Avocados',
-      category: 'Produce',
-      quantity: 3,
-      unit: 'item',
-      price: 1.25,
-      brand: 'Avocados from Mexico'
+      name: 'Fresh Dahi Curd / Yogurt',
+      category: 'Dairy & Eggs',
+      quantity: 2,
+      unit: 'tub',
+      price: 35,
+      brand: 'Mother Dairy'
     }
   },
 
@@ -40,16 +40,16 @@ export const INITIAL_SMART_SUGGESTIONS: SmartSuggestion[] = [
     id: 'sug-season-1',
     type: 'seasonal',
     title: 'Fresh In-Season Produce',
-    description: 'Organic Honeycrisp Apples are in peak season right now with exceptional flavor.',
+    description: 'Fresh Shimla Apples are in peak season right now with exceptional crispness.',
     badge: 'Peak Harvest',
-    reason: 'Autumn Harvest Special',
+    reason: 'Himachal Harvest Special',
     item: {
-      name: 'Organic Honeycrisp Apples',
+      name: 'Fresh Shimla Apples',
       category: 'Produce',
-      quantity: 2,
-      unit: 'lb',
-      price: 3.99,
-      brand: 'FreshFarm Organic',
+      quantity: 1,
+      unit: 'kg',
+      price: 140,
+      brand: 'Shimla Fresh',
       isOrganic: true
     }
   },
@@ -57,17 +57,17 @@ export const INITIAL_SMART_SUGGESTIONS: SmartSuggestion[] = [
     id: 'sug-sale-1',
     type: 'sale',
     title: 'Weekly Discount Special',
-    description: 'Fresh Strawberries are 25% off this week — fresh from Driscoll\'s.',
-    badge: 'Save $1.50',
-    savings: 1.50,
-    reason: 'Weekly Flyer Deal',
+    description: 'Tata Sampann Toor Dal has a special price this week.',
+    badge: 'Save ₹20',
+    savings: 20,
+    reason: 'Weekly Market Deal',
     item: {
-      name: 'Fresh Strawberries',
-      category: 'Produce',
+      name: 'Tata Sampann Toor Dal',
+      category: 'Pantry',
       quantity: 1,
-      unit: 'pack',
-      price: 4.49,
-      brand: "Driscoll's"
+      unit: 'kg',
+      price: 145,
+      brand: "Tata Sampann"
     }
   }
 ];
@@ -85,52 +85,51 @@ export const SMART_SUBSTITUTES_MAP: Record<
   }
 > = {
   'milk': {
-    substituteName: 'Almond Milk Unsweetened',
+    substituteName: 'Soy / Almond Milk',
     category: 'Dairy & Eggs',
-    price: 3.49,
+    price: 120,
     unit: 'carton',
-    brand: 'Silk',
-    reason: 'Popular plant-based & dairy-free alternative'
+    brand: 'Sofit',
+    reason: 'Popular plant-based & lactose-free alternative'
   },
   'whole milk': {
-    substituteName: 'Almond Milk Unsweetened',
+    substituteName: 'Toned Cow Milk (Low Fat)',
     category: 'Dairy & Eggs',
-    price: 3.49,
-    unit: 'carton',
-    brand: 'Silk',
-    reason: 'Plant-based, lactose-free alternative'
+    price: 32,
+    unit: 'packet',
+    brand: 'Amul Taaza',
+    reason: 'Lighter low-fat alternative'
   },
-  'bread': {
-    substituteName: 'Gluten-Free Multigrain Bread',
-    category: 'Bakery',
-    price: 6.49,
-    unit: 'loaf',
-    brand: 'Canyon Bakehouse',
-    reason: 'Gluten-free certified alternative'
-  },
-  'chicken': {
-    substituteName: 'Organic Firm Tofu',
-    category: 'Meat & Seafood',
-    price: 2.99,
+  'butter': {
+    substituteName: 'Amul Lite Low Fat Spread',
+    category: 'Dairy & Eggs',
+    price: 52,
     unit: 'pack',
-    brand: 'Nasoya',
-    reason: 'High protein plant-based alternative',
-    savings: 5.00
+    brand: 'Amul',
+    reason: 'Lower cholesterol cooking option'
   },
-  'pasta': {
-    substituteName: 'Gluten-Free Chickpea Pasta',
+  'sugar': {
+    substituteName: 'Organic Jaggery / Gur',
     category: 'Pantry',
-    price: 3.29,
-    unit: 'box',
-    brand: 'Banza',
-    reason: 'High protein & gluten-free alternative'
+    price: 65,
+    unit: 'pack',
+    brand: 'Organic Tattva',
+    reason: 'Natural unrefined sweetener'
   },
-  'toothpaste': {
-    substituteName: 'Sensodyne Rapid Relief Toothpaste',
-    category: 'Personal Care',
-    price: 6.29,
-    unit: 'tube',
-    brand: 'Sensodyne',
-    reason: 'Sensitive enamel care alternative'
-  }
+  'atta': {
+    substituteName: 'Multigrain Atta',
+    category: 'Pantry',
+    price: 280,
+    unit: 'kg',
+    brand: 'Aashirvaad',
+    reason: 'High fiber multigrain alternative'
+  },
+  'white rice': {
+    substituteName: 'Brown Basmati Rice',
+    category: 'Pantry',
+    price: 150,
+    unit: 'kg',
+    brand: 'India Gate',
+    reason: 'Whole grain high fiber rice'
+  },
 };

@@ -162,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="hidden sm:flex items-center gap-1.5 pl-2.5 border-l border-stone-200 dark:border-stone-800">
             <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Total:</span>
             <span className="text-xs font-mono font-bold text-stone-900 dark:text-stone-100">
-              ${totalPrice.toFixed(2)}
+              ₹{totalPrice.toFixed(0)}
             </span>
           </div>
 
