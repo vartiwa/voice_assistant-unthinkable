@@ -98,7 +98,7 @@ export const App: React.FC = () => {
 
   // 4. Voice Assistant State
   const [isListening, setIsListening] = useState(false);
-  const [isHandsFree, setIsHandsFree] = useState(false);
+  const [isHandsFree, setIsHandsFree] = useState(true);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
@@ -144,21 +144,23 @@ export const App: React.FC = () => {
     } catch (e) {}
   }, [messages]);
 
-  // Automatic Voice Welcome Greeting on Site Open
+  // Automatic Voice Welcome Greeting on Site Open & Auto-Start Hands-Free Listening
   useEffect(() => {
     const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
     let hasSpoken = false;
 
-    const triggerWelcomeSpeech = () => {
+    const triggerWelcomeSpeech = async () => {
       if (hasSpoken) return;
       hasSpoken = true;
-      speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
+      setIsHandsFree(true);
+      await speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
+      startListeningSession();
     };
 
     // 1. Direct speech attempt on mount
     const timer = setTimeout(() => {
       triggerWelcomeSpeech();
-    }, 700);
+    }, 600);
 
     // 2. User interaction fallback (handles browser autoplay restriction policies)
     const onFirstUserAction = () => {
@@ -178,7 +180,7 @@ export const App: React.FC = () => {
       window.removeEventListener('keydown', onFirstUserAction);
       window.removeEventListener('touchstart', onFirstUserAction);
     };
-  }, [selectedLanguage]);
+  }, [selectedLanguage, startListeningSession]);
 
   // Voice Command Execution Engine
   const executeCommand = useCallback(
