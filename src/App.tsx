@@ -296,11 +296,48 @@ export const App: React.FC = () => {
         latestTranscriptRef.current = transcript;
         setLiveTranscript(transcript);
 
+        const lowerTranscript = transcript.toLowerCase().trim();
+
+        // ⚡ INSTANT 0ms ZERO-LATENCY STOP / SLEEP TRIGGER
+        // If the user says "stop", "sleep", "done", "ok done", "bas", "ho gaya" anywhere in the utterance,
+        // execute immediately without waiting for any silence timer!
+        const isImmediateStop =
+          lowerTranscript === 'stop' ||
+          lowerTranscript === 'sleep' ||
+          lowerTranscript === 'done' ||
+          lowerTranscript === 'ok done' ||
+          lowerTranscript === 'okay done' ||
+          lowerTranscript === 'all done' ||
+          lowerTranscript === 'shut up' ||
+          lowerTranscript === 'quiet' ||
+          lowerTranscript === 'bas' ||
+          lowerTranscript === 'ho gaya' ||
+          lowerTranscript === 'khatam' ||
+          lowerTranscript === 'itna hi' ||
+          lowerTranscript === 'podhum' ||
+          lowerTranscript === 'mudinjadhu' ||
+          lowerTranscript === 'go to sleep' ||
+          lowerTranscript.endsWith(' stop') ||
+          lowerTranscript.endsWith(' sleep') ||
+          lowerTranscript.endsWith(' done');
+
+        if (isImmediateStop) {
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+          setLiveTranscript('');
+          latestTranscriptRef.current = '';
+          speechService.clearCurrentTranscript();
+          executeCommand(transcript);
+          return;
+        }
+
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Snappy Speech Debounce (1000ms): executes as soon as user stops speaking
+        // Snappy Speech Debounce (800ms): executes as soon as user stops speaking
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
@@ -314,7 +351,7 @@ export const App: React.FC = () => {
             }
             executeCommand(finalCmd);
           }
-        }, 1000);
+        }, 800);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });

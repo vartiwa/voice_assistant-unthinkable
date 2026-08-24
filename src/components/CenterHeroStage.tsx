@@ -12,7 +12,8 @@ import {
   Activity,
   Radio,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Volume2
 } from 'lucide-react';
 
 interface CenterHeroStageProps {
@@ -184,6 +185,21 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
 
       </div>
 
+      {/* Prominent Voice Assistant Greeting Banner */}
+      <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-slate-900 dark:text-slate-100 shadow-2xs">
+        <div className="w-7 h-7 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
+          <Volume2 className="w-4 h-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
+            "Hello! What do you need to add? Tell me, or say 'Stop'."
+          </p>
+          <p className="text-[10.5px] text-emerald-800 dark:text-emerald-300 font-medium mt-0.5">
+            🎙️ Continuous Hands-Free Listening active. Speak any item or say <span className="font-bold underline">"Stop"</span> / <span className="font-bold underline">"Ok done"</span> to sleep.
+          </p>
+        </div>
+      </div>
+
       {/* Real-Time Live Speech Subtitle Display */}
       {liveTranscript && (
         <div className="w-full px-4 py-2.5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-left animate-in fade-in">
@@ -220,7 +236,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           onChange={(e) => setInputText(e.target.value)}
           placeholder={
             isHandsFree
-              ? 'Hands-Free Active: Speak directly ("Add 2 packets milk", "Add atta")...'
+              ? 'Hands-Free Active: Speak directly ("Add 2 packets milk", "Add atta", "Stop")...'
               : 'Speak or type: "Add 2 packets milk", "Add 5 kg atta", "Find snacks under ₹50"...'
           }
           className="flex-1 bg-transparent px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
