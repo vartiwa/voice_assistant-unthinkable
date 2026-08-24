@@ -304,10 +304,10 @@ export const App: React.FC = () => {
         const isImmediateStop =
           lowerTranscript === 'stop' ||
           lowerTranscript === 'sleep' ||
-          lowerTranscript === 'done' ||
           lowerTranscript === 'ok done' ||
           lowerTranscript === 'okay done' ||
           lowerTranscript === 'all done' ||
+          lowerTranscript === 'done' ||
           lowerTranscript === 'shut up' ||
           lowerTranscript === 'quiet' ||
           lowerTranscript === 'bas' ||
@@ -317,9 +317,7 @@ export const App: React.FC = () => {
           lowerTranscript === 'podhum' ||
           lowerTranscript === 'mudinjadhu' ||
           lowerTranscript === 'go to sleep' ||
-          lowerTranscript.endsWith(' stop') ||
-          lowerTranscript.endsWith(' sleep') ||
-          lowerTranscript.endsWith(' done');
+          lowerTranscript === 'stop listening';
 
         if (isImmediateStop) {
           if (silenceTimerRef.current) {

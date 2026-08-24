@@ -110,7 +110,7 @@ class SpeechService {
     };
 
     this.recognition.onresult = (event: any) => {
-      // Don't process recognition while TTS voice is speaking feedback
+      // Echo shield: don't process recognition while TTS voice is speaking
       if (this.isSpeakingTTS) return;
 
       let currentTranscript = '';
@@ -125,7 +125,7 @@ class SpeechService {
       }
 
       const clean = currentTranscript.trim();
-      if (clean && this.activeHandlers) {
+      if (clean && this.activeHandlers && !this.isSpeakingTTS) {
         this.activeHandlers.onResult(clean, hasFinal);
       }
     };
@@ -357,7 +357,7 @@ class SpeechService {
     this.activeUtterance = null;
   }
 
-  // Robust, Glitch-Free Natural Female Speech Synthesis
+  // Robust, Glitch-Free Natural Female Speech Synthesis with 350ms Echo Guard
   public speak(text: string, langCode: string = this.currentLanguage): Promise<void> {
     return new Promise((resolve) => {
       if (this.ttsMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -411,17 +411,17 @@ class SpeechService {
           clearInterval(this.speechKeepAliveInterval);
           this.speechKeepAliveInterval = null;
         }
-        this.isSpeakingTTS = false;
         this.activeUtterance = null;
 
-        // Auto-resume recognition smoothly after speaking finishes
-        if (this.isListening && this.activeHandlers) {
-          setTimeout(() => {
+        // 350ms Echo Barrier: Discard any mic feedback from speaker before reenabling recognition
+        setTimeout(() => {
+          this.isSpeakingTTS = false;
+          this.clearCurrentTranscript();
+          if (this.isListening && this.activeHandlers) {
             this.safeRestartRecognition();
-          }, 150);
-        }
-
-        resolve();
+          }
+          resolve();
+        }, 350);
       };
 
       utterance.onend = cleanupAndResolve;
