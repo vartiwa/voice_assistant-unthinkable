@@ -133,4 +133,10 @@ npm run build
 
 ---
 
+## 🙏 Thank You Note
+
+Thank you to the evaluation team at **Unthinkable Solutions** for the opportunity to design and build this full-stack voice assistant assessment. We hope you enjoy exploring the hands-free voice experience, the Indian grocery matrix, live market price simulations, and the clean design system!
+
+---
+
 *Authored for the Technical Assessment Project - Software Engineering Position.*
