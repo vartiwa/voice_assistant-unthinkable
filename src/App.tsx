@@ -111,17 +111,6 @@ export const App: React.FC = () => {
     return false;
   });
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    try {
-      localStorage.setItem('voice_cart_dark_mode', String(isDarkMode));
-    } catch (e) {}
-  }, [isDarkMode]);
-
   // 5. Views & Modals State
   const [activeView, setActiveView] = useState<'chat' | 'cart' | 'suggestions'>('cart');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -130,57 +119,8 @@ export const App: React.FC = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
 
-  // Persist items
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {}
-  }, [items]);
-
-  // Persist chat
-  useEffect(() => {
-    try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-20)));
-    } catch (e) {}
-  }, [messages]);
-
-  // Automatic Voice Welcome Greeting on Site Open & Auto-Start Hands-Free Listening
-  useEffect(() => {
-    const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
-    let hasSpoken = false;
-
-    const triggerWelcomeSpeech = async () => {
-      if (hasSpoken) return;
-      hasSpoken = true;
-      setIsHandsFree(true);
-      await speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
-      startListeningSession();
-    };
-
-    // 1. Direct speech attempt on mount
-    const timer = setTimeout(() => {
-      triggerWelcomeSpeech();
-    }, 600);
-
-    // 2. User interaction fallback (handles browser autoplay restriction policies)
-    const onFirstUserAction = () => {
-      triggerWelcomeSpeech();
-      window.removeEventListener('click', onFirstUserAction);
-      window.removeEventListener('keydown', onFirstUserAction);
-      window.removeEventListener('touchstart', onFirstUserAction);
-    };
-
-    window.addEventListener('click', onFirstUserAction, { once: true });
-    window.addEventListener('keydown', onFirstUserAction, { once: true });
-    window.addEventListener('touchstart', onFirstUserAction, { once: true });
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('click', onFirstUserAction);
-      window.removeEventListener('keydown', onFirstUserAction);
-      window.removeEventListener('touchstart', onFirstUserAction);
-    };
-  }, [selectedLanguage, startListeningSession]);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const latestTranscriptRef = useRef<string>('');
 
   // Voice Command Execution Engine
   const executeCommand = useCallback(
@@ -207,7 +147,7 @@ export const App: React.FC = () => {
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
       // Play soft harmonic earcon chime on intent match
-      if (parsed.intent !== 'UNKNOWN') {
+      if (parsed.intent !== 'UNKNOWN' && parsed.intent !== 'STOP_LISTENING') {
         speechService.playEarcon('success');
       }
 
@@ -229,6 +169,9 @@ export const App: React.FC = () => {
             setItems((prev) => {
               let updated = [...prev];
               for (const detail of itemsToAdd) {
+                // Record repeat consumption pattern
+                userPreferenceService.recordItemUsage(detail.name, detail.category || 'Other', detail.brand);
+
                 const existingIdx = updated.findIndex(
                   (i) => i.name.toLowerCase() === detail.name.toLowerCase()
                 );
@@ -332,9 +275,6 @@ export const App: React.FC = () => {
     [selectedLanguage, isMuted]
   );
 
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const latestTranscriptRef = useRef<string>('');
-
   const startListeningSession = useCallback(() => {
     latestTranscriptRef.current = '';
     setLiveTranscript('');
@@ -420,6 +360,70 @@ export const App: React.FC = () => {
     }
   };
 
+  // Dark mode effect
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('voice_cart_dark_mode', String(isDarkMode));
+    } catch (e) {}
+  }, [isDarkMode]);
+
+  // Persist items
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {}
+  }, [items]);
+
+  // Persist chat
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-20)));
+    } catch (e) {}
+  }, [messages]);
+
+  // Automatic Voice Welcome Greeting on Site Open & Auto-Start Hands-Free Listening
+  useEffect(() => {
+    const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
+    let hasSpoken = false;
+
+    const triggerWelcomeSpeech = async () => {
+      if (hasSpoken) return;
+      hasSpoken = true;
+      setIsHandsFree(true);
+      await speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
+      startListeningSession();
+    };
+
+    // 1. Direct speech attempt on mount
+    const timer = setTimeout(() => {
+      triggerWelcomeSpeech();
+    }, 600);
+
+    // 2. User interaction fallback (handles browser autoplay restriction policies)
+    const onFirstUserAction = () => {
+      triggerWelcomeSpeech();
+      window.removeEventListener('click', onFirstUserAction);
+      window.removeEventListener('keydown', onFirstUserAction);
+      window.removeEventListener('touchstart', onFirstUserAction);
+    };
+
+    window.addEventListener('click', onFirstUserAction, { once: true });
+    window.addEventListener('keydown', onFirstUserAction, { once: true });
+    window.addEventListener('touchstart', onFirstUserAction, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('click', onFirstUserAction);
+      window.removeEventListener('keydown', onFirstUserAction);
+      window.removeEventListener('touchstart', onFirstUserAction);
+    };
+  }, [selectedLanguage, startListeningSession]);
+
   // Hands-Free Continuous Keep-Alive Watchdog
   useEffect(() => {
     if (!isHandsFree) return;
@@ -445,66 +449,91 @@ export const App: React.FC = () => {
         .map((item) => {
           if (item.id === id) {
             const nextQty = Math.max(0, item.quantity + delta);
-            return { ...item, quantity: nextQty };
+            return nextQty === 0 ? null : { ...item, quantity: nextQty };
           }
           return item;
         })
-        .filter((item) => item.quantity > 0)
+        .filter(Boolean) as ShoppingItem[]
     );
   };
 
   const handleDeleteItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleClearList = () => {
     setItems([]);
   };
 
-  const handleApplySubstitute = (originalItem: ShoppingItem) => {
-    const key = Object.keys(SMART_SUBSTITUTES_MAP).find((k) =>
-      originalItem.name.toLowerCase().includes(k)
-    );
-    if (!key) return;
-
-    const substitute = SMART_SUBSTITUTES_MAP[key];
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id === originalItem.id) {
-          return {
-            ...item,
-            name: substitute.substituteName,
-            price: substitute.price,
-            category: substitute.category,
-            isOrganic: (substitute as any).isOrganic ?? item.isOrganic,
-          };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleAddCustomItem = (
-    itemData: Omit<ShoppingItem, 'id' | 'addedAt' | 'completed'>
-  ) => {
+  const handleAddSuggestion = (suggestion: SmartSuggestion) => {
     const newItem: ShoppingItem = {
-      ...itemData,
       id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: suggestion.item.name,
+      category: suggestion.item.category,
+      quantity: suggestion.item.quantity || 1,
+      unit: suggestion.item.unit || 'item',
+      price: suggestion.item.price || 50,
+      brand: suggestion.item.brand,
+      isOrganic: suggestion.item.isOrganic,
       completed: false,
       addedAt: new Date().toISOString(),
     };
 
     setItems((prev) => [newItem, ...prev]);
-    const feedbackMsg = `Added ${newItem.name} to ${newItem.category}.`;
+    setAddedSuggestionIds((prev) => new Set([...prev, suggestion.id]));
 
-    if (!isMuted) {
-      speechService.speak(feedbackMsg, selectedLanguage.speechCode);
+    try {
+      confetti({
+        particleCount: 20,
+        spread: 40,
+        origin: { y: 0.85 },
+      });
+    } catch (e) {}
+  };
+
+  const handleApplySubstitute = (originalItem: ShoppingItem) => {
+    const substituteKey = Object.keys(SMART_SUBSTITUTES_MAP).find((k) =>
+      originalItem.name.toLowerCase().includes(k)
+    );
+
+    if (substituteKey) {
+      const sub = SMART_SUBSTITUTES_MAP[substituteKey];
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === originalItem.id
+            ? {
+                ...item,
+                name: sub.substituteName,
+                price: sub.price,
+                brand: sub.brand,
+              }
+            : item
+        )
+      );
+
+      const msg = `Substituted ${originalItem.name} with ${sub.substituteName} (${sub.reason})`;
+      if (!isMuted) {
+        speechService.speak(msg, selectedLanguage.speechCode);
+      }
     }
   };
 
-  const handleAddSuggestion = (suggestion: SmartSuggestion) => {
-    handleAddCustomItem(suggestion.item);
-    setAddedSuggestionIds((prev) => new Set([...prev, suggestion.id]));
+  const handleAddCustomItem = (itemDetails: Omit<ShoppingItem, 'id' | 'addedAt' | 'completed'>) => {
+    const newItem: ShoppingItem = {
+      ...itemDetails,
+      id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      completed: false,
+      addedAt: new Date().toISOString(),
+    };
+    setItems((prev) => [newItem, ...prev]);
+
+    try {
+      confetti({
+        particleCount: 25,
+        spread: 45,
+        origin: { y: 0.8 },
+      });
+    } catch (e) {}
   };
 
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
