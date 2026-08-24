@@ -90,14 +90,14 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
   ];
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-zinc-800 shadow-sm space-y-4">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-stone-200 dark:border-zinc-800 shadow-sm space-y-4">
       
       {/* Top Row matching Sketch: Time/Date box on left + Spacious Open Hero Stage for Orb */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
         
         {/* Left: Time & Date Box from Sketch */}
-        <div className="sm:col-span-4 text-left p-4 rounded-2xl bg-slate-50/90 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 space-y-2.5">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-zinc-700/60">
+        <div className="sm:col-span-4 text-left p-4 rounded-2xl bg-stone-50/90 dark:bg-zinc-800/60 border border-stone-200 dark:border-zinc-700/80 space-y-2.5">
+          <div className="flex items-center justify-between pb-2 border-b border-stone-200/80 dark:border-zinc-700/60">
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800 dark:text-slate-200">
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span>{currentDateStr}</span>
@@ -114,13 +114,13 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
                 <RotateCcw className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Restock Cycle</span>
               </span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-stone-200 dark:border-zinc-700">
                 {daysToMonthEnd} days left
               </span>
             </div>
 
             {/* Micro Progress Bar */}
-            <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-stone-200 dark:bg-zinc-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${Math.max(10, 100 - (daysToMonthEnd / 30) * 100)}%` }}
@@ -130,7 +130,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
         </div>
 
         {/* Center: Spacious Dedicated Hero Pedestal for the 3D Orb */}
-        <div className="sm:col-span-8 flex items-center justify-center gap-6 sm:gap-8 py-5 sm:py-7 px-4 sm:px-6 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-slate-100 dark:border-zinc-800/70">
+        <div className="sm:col-span-8 flex items-center justify-center gap-6 sm:gap-8 py-5 sm:py-7 px-4 sm:px-6 bg-stone-50/80 dark:bg-zinc-800/40 rounded-2xl border border-stone-200/90 dark:border-zinc-800/80">
           
           {/* 3D Orb with Generous Breathing Room */}
           <div 

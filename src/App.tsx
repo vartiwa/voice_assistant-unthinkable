@@ -435,7 +435,7 @@ export const App: React.FC = () => {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0C0D0E] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-[#1E3A8A] selection:text-white scroll-smooth">
+    <div className="min-h-screen bg-[#F8F8F5] dark:bg-[#111215] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-[#1E3A8A] selection:text-white scroll-smooth">
       
       {/* Top Header matching V-Cart from sketch */}
       <Navbar
