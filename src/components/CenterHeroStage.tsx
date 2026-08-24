@@ -170,7 +170,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
               ) : (
                 <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs font-bold">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{isHandsFree ? 'Say "Hey Assistant"' : 'Click Orb to Speak'}</span>
+                  <span>{isHandsFree ? 'Hands-Free: Speak Directly' : 'Click Orb to Speak'}</span>
                 </div>
               )}
             </div>
@@ -219,7 +219,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
           onChange={(e) => setInputText(e.target.value)}
           placeholder={
             isHandsFree
-              ? 'Say "Hey Assistant, add 2 packets of milk" or type a command...'
+              ? 'Hands-Free Active: Speak directly ("Add 2 packets milk", "Add atta")...'
               : 'Speak or type: "Add 2 packets milk", "Add 5 kg atta", "Find snacks under ₹50"...'
           }
           className="flex-1 bg-transparent px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"

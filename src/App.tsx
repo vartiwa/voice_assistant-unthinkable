@@ -290,11 +290,15 @@ export const App: React.FC = () => {
     speechService.startListening({
       onStart: () => setIsListening(true),
       onEnd: () => {
-        setIsListening(false);
-        setAudioLevel(0);
+        if (!isHandsFree) {
+          setIsListening(false);
+          setAudioLevel(0);
+        }
       },
       onError: (_err) => {
-        setIsListening(false);
+        if (!isHandsFree) {
+          setIsListening(false);
+        }
       },
       onResult: (transcript) => {
         latestTranscriptRef.current = transcript;
@@ -304,7 +308,7 @@ export const App: React.FC = () => {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Patient Speech Debounce: Wait 1600ms after user stops speaking before executing command
+        // Snappy Speech Debounce (1100ms): executes as soon as user stops speaking
         silenceTimerRef.current = setTimeout(() => {
           const finalCmd = latestTranscriptRef.current.trim();
           if (finalCmd) {
@@ -316,7 +320,7 @@ export const App: React.FC = () => {
             latestTranscriptRef.current = '';
             executeCommand(finalCmd);
           }
-        }, 1600);
+        }, 1100);
       },
       onAudioLevel: (level) => setAudioLevel(level),
     });
@@ -349,15 +353,16 @@ export const App: React.FC = () => {
     if (nextState) {
       startListeningSession();
       if (!isMuted) {
-        speechService.speak('Hands free active. Say: Hey Assistant, add milk.', selectedLanguage.speechCode);
+        speechService.speak('Hands-free mode active. I am listening continuously. You can speak any command directly.', selectedLanguage.speechCode);
       }
     } else {
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
       }
       speechService.stopListening();
       setIsListening(false);
-      setLiveTranscript('');
+      setAudioLevel(0);
     }
   };
 
