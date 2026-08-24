@@ -68,6 +68,7 @@ export type VoiceIntent =
   | 'CLEAR_LIST'
   | 'HELP'
   | 'WAKE_GREETING'
+  | 'STOP_LISTENING'
   | 'UNKNOWN';
 
 export interface ExtractedItemDetail {

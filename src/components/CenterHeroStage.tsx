@@ -81,6 +81,7 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
     { label: 'Hindi', icon: '🇮🇳', cmd: '2 packet paneer aur doodh add karo' },
     { label: 'Tamil', icon: '🇮🇳', cmd: '1 kg thakkali and arisi venum' },
     { label: 'Budget', icon: '🏷️', cmd: 'Find snacks under ₹50' },
+    { label: 'Done', icon: '😴', cmd: 'Ok done' },
   ];
 
   // Dynamic Equalizer visualizer bars (7 bars)

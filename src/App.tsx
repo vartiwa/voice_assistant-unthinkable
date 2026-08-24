@@ -268,6 +268,20 @@ export const App: React.FC = () => {
           break;
         }
 
+        case 'STOP_LISTENING': {
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+          setIsHandsFree(false);
+          speechService.stopListening();
+          setIsListening(false);
+          setAudioLevel(0);
+          setLiveTranscript('');
+          speechService.playEarcon('cancel');
+          break;
+        }
+
         case 'HELP': {
           setIsHelpOpen(true);
           break;

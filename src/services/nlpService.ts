@@ -684,6 +684,47 @@ export class NLPEngine {
 
     const lower = (cleanedText || text).toLowerCase().trim();
 
+    // 0. SLEEP & STOP LISTENING COMMANDS ("ok done", "sleep", "that's all", "bas", "ho gaya", "stop listening")
+    if (
+      lower === 'ok done' ||
+      lower === 'okay done' ||
+      lower === 'done' ||
+      lower === 'all done' ||
+      lower === 'sleep' ||
+      lower === 'go to sleep' ||
+      lower === 'stop listening' ||
+      lower === 'stop' ||
+      lower === 'shut up' ||
+      lower === 'quiet' ||
+      lower === "that's all" ||
+      lower === "that's it" ||
+      lower === 'thats all' ||
+      lower === 'thats it' ||
+      lower === 'i am done' ||
+      lower === 'im done' ||
+      lower === 'nothing else' ||
+      lower === 'no more' ||
+      lower === 'ho gaya' ||
+      lower === 'bas' ||
+      lower === 'khatam' ||
+      lower === 'chup' ||
+      lower === 'itna hi' ||
+      lower === 'mudinjadhu' ||
+      lower === 'podhum' ||
+      lower === 'niruthu' ||
+      lower.startsWith('stop listen') ||
+      lower.startsWith('go to sleep') ||
+      lower.startsWith('sleep now')
+    ) {
+      return {
+        intent: 'STOP_LISTENING',
+        rawText: text,
+        confidenceScore: 0.99,
+        feedbackMessage: "Alright, going to sleep! Click the microphone or orb whenever you're ready.",
+        success: true,
+      };
+    }
+
     // 1. HELP COMMANDS
     if (
       lower.includes('help') ||
