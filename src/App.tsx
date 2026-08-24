@@ -297,27 +297,27 @@ export const App: React.FC = () => {
 
         const lower = transcript.toLowerCase().trim();
 
-        // Instant Stop & Sleep Command Trigger
+        // Instant Stop & Sleep Command Trigger (Catches "stop", "stop stop", "please stop", "sleep", "done", "bas", etc.)
         const isStopCommand =
-          lower === 'stop' ||
-          lower === 'sleep' ||
-          lower === 'go to sleep' ||
-          lower === 'stop listening' ||
-          lower === 'ok done' ||
-          lower === 'okay done' ||
-          lower === 'all done' ||
-          lower === 'done' ||
-          lower === 'bas' ||
-          lower === 'ho gaya' ||
-          lower === 'khatam' ||
-          lower === 'podhum' ||
-          lower === 'mudinjadhu';
+          lower.includes('stop') ||
+          lower.includes('sleep') ||
+          lower.includes('done') ||
+          lower.includes('bas') ||
+          lower.includes('chup') ||
+          lower.includes('khatam') ||
+          lower.includes('itna hi') ||
+          lower.includes('podhum') ||
+          lower.includes('mudinjadhu') ||
+          lower.includes('ho gaya');
 
         if (isStopCommand) {
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
           }
+          setIsHandsFree(false);
+          speechService.stopListening();
+          setIsListening(false);
           setLiveTranscript('');
           latestTranscriptRef.current = '';
           speechService.clearCurrentTranscript();

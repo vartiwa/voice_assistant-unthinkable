@@ -684,37 +684,25 @@ export class NLPEngine {
 
     const lower = (cleanedText || text).toLowerCase().trim();
 
-    // 0. SLEEP & STOP LISTENING COMMANDS ("ok done", "sleep", "that's all", "bas", "ho gaya", "stop listening")
+    // 0. SLEEP & STOP LISTENING COMMANDS (Matches any occurrence of "stop", "stop stop", "sleep", "done", "bas", etc.)
     if (
-      lower === 'ok done' ||
-      lower === 'okay done' ||
-      lower === 'done' ||
-      lower === 'all done' ||
-      lower === 'sleep' ||
-      lower === 'go to sleep' ||
-      lower === 'stop listening' ||
-      lower === 'stop' ||
-      lower === 'shut up' ||
-      lower === 'quiet' ||
-      lower === "that's all" ||
-      lower === "that's it" ||
-      lower === 'thats all' ||
-      lower === 'thats it' ||
-      lower === 'i am done' ||
-      lower === 'im done' ||
-      lower === 'nothing else' ||
-      lower === 'no more' ||
-      lower === 'ho gaya' ||
-      lower === 'bas' ||
-      lower === 'khatam' ||
-      lower === 'chup' ||
-      lower === 'itna hi' ||
-      lower === 'mudinjadhu' ||
-      lower === 'podhum' ||
-      lower === 'niruthu' ||
-      lower.startsWith('stop listen') ||
-      lower.startsWith('go to sleep') ||
-      lower.startsWith('sleep now')
+      lower.includes('stop') ||
+      lower.includes('sleep') ||
+      lower.includes('done') ||
+      lower.includes('bas') ||
+      lower.includes('chup') ||
+      lower.includes('khatam') ||
+      lower.includes('itna hi') ||
+      lower.includes('mudinjadhu') ||
+      lower.includes('podhum') ||
+      lower.includes('niruthu') ||
+      lower.includes('ho gaya') ||
+      lower.includes('shut up') ||
+      lower.includes('quiet') ||
+      lower.includes("that's all") ||
+      lower.includes("that's it") ||
+      lower.includes('thats all') ||
+      lower.includes('thats it')
     ) {
       return {
         intent: 'STOP_LISTENING',
