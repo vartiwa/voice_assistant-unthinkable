@@ -386,15 +386,16 @@ export const App: React.FC = () => {
     } catch (e) {}
   }, [messages]);
 
-  // Automatic Voice Welcome Greeting on Site Open & Auto-Start Hands-Free Listening
+  const hasGreetedOnMountRef = useRef(false);
+
+  // Automatic Voice Welcome Greeting on Site Open (Runs Strictly Once on Initial Mount)
   useEffect(() => {
+    if (hasGreetedOnMountRef.current) return;
+    hasGreetedOnMountRef.current = true;
+
     const welcomeGreeting = "Hello! What do you need to add? Tell me, or say 'Stop'.";
-    let hasSpoken = false;
 
     const triggerWelcomeSpeech = async () => {
-      if (hasSpoken) return;
-      hasSpoken = true;
-      setIsHandsFree(true);
       await speechService.speak(welcomeGreeting, selectedLanguage.speechCode);
       startListeningSession();
     };
@@ -406,10 +407,10 @@ export const App: React.FC = () => {
 
     // 2. User interaction fallback (handles browser autoplay restriction policies)
     const onFirstUserAction = () => {
-      triggerWelcomeSpeech();
       window.removeEventListener('click', onFirstUserAction);
       window.removeEventListener('keydown', onFirstUserAction);
       window.removeEventListener('touchstart', onFirstUserAction);
+      triggerWelcomeSpeech();
     };
 
     window.addEventListener('click', onFirstUserAction, { once: true });
@@ -422,7 +423,7 @@ export const App: React.FC = () => {
       window.removeEventListener('keydown', onFirstUserAction);
       window.removeEventListener('touchstart', onFirstUserAction);
     };
-  }, [selectedLanguage, startListeningSession]);
+  }, []);
 
   // Hands-Free Continuous Keep-Alive Watchdog
   useEffect(() => {
