@@ -48,9 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <h1 className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
               V-Cart
             </h1>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
-              AI
-            </span>
           </div>
         </div>
 

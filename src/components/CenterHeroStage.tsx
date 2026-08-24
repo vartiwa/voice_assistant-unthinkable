@@ -10,7 +10,6 @@ import {
   RotateCcw, 
   Leaf,
   Activity,
-  Sparkles,
   Radio
 } from 'lucide-react';
 
@@ -170,9 +169,8 @@ export const CenterHeroStage: React.FC<CenterHeroStageProps> = ({
               )}
             </div>
 
-            <span className="text-[10.5px] font-mono text-slate-400 pl-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-500" />
-              <span>Multilingual AI · Natural Speech</span>
+            <span className="text-[10.5px] font-mono text-slate-400 pl-1">
+              Multilingual Voice Assistant · Natural Speech
             </span>
           </div>
         </div>
